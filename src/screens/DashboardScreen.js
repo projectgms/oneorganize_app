@@ -3,6 +3,7 @@ import { ScrollView, View } from "react-native";
 import { Card, ProgressBar, Text, Button } from "react-native-paper";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchHrmOverviewRequest } from "../../store/slices/hrmSlice";
+import { StatusBar } from "expo-status-bar";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -100,6 +101,7 @@ export default function DashboardScreen({ navigation }) {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
       {/* ✅ HRM Attendance Card */}
+      <StatusBar style="auto" />
       <Card style={{ marginBottom: 12, backgroundColor: "#0b1220" }}>
         <Card.Content>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>

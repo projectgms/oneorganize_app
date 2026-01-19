@@ -3,11 +3,13 @@ import { Alert } from "react-native";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
+import { useTheme } from "react-native-paper";
 
 import MainTabs from "./MainTabs";
 import ProfileScreen from "../screens/app/ProfileScreen";
 import LeaveManagementScreen from "../screens/app/LeaveManagementScreen";
 import ChangePasswordScreen from "../screens/auth/ChangePasswordScreen";
+import AppearanceScreen from "../screens/app/AppearanceScreen";
 import AppHeader from "../components/AppHeader";
 
 import { hasAnyPermission } from "../store/selectors/authSelectors";
@@ -17,8 +19,11 @@ const Drawer = createDrawerNavigator();
 
 export default function AppDrawer() {
   const dispatch = useDispatch();
+  const theme = useTheme();
+
   const permissions = useSelector((s) => s.auth.permissions || []);
-  const brandPrimary = useSelector((s) => s.auth.brandSettings?.primary_color) || "#1677ff";
+  const brandPrimary =
+    useSelector((s) => s.auth.brandSettings?.primary_color) || theme.colors.primary;
 
   const canSeeLeave = hasAnyPermission(permissions, [
     "show leave",
@@ -37,14 +42,18 @@ export default function AppDrawer() {
   return (
     <Drawer.Navigator
       screenOptions={{
-        header: (props) => <AppHeader {...props} />,   // ✅ custom header here
+        header: (props) => <AppHeader {...props} />,
         drawerActiveTintColor: brandPrimary,
+        drawerInactiveTintColor: theme.colors.onSurfaceVariant,
+        drawerStyle: { backgroundColor: theme.colors.surface },
+        sceneContainerStyle: { backgroundColor: theme.colors.background },
       }}
     >
       <Drawer.Screen
         name="Home"
         component={MainTabs}
         options={{
+          title: "Dashboard",
           drawerIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="home-outline" color={color} size={size} />
           ),
@@ -85,7 +94,17 @@ export default function AppDrawer() {
         }}
       />
 
-      {/* Logout drawer item */}
+      <Drawer.Screen
+        name="Appearance"
+        component={AppearanceScreen}
+        options={{
+          title: "Appearance",
+          drawerIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="theme-light-dark" color={color} size={size} />
+          ),
+        }}
+      />
+
       <Drawer.Screen
         name="Logout"
         component={MainTabs}

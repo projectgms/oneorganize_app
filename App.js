@@ -8,35 +8,43 @@ import * as Linking from "expo-linking";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { AuthProvider } from "./src/context/AuthContext";
 import { AppDataProvider } from "./src/context/AppDataContext";
-import { paperTheme } from "./src/theme/paperTheme";
 import { store } from "./src/store";
 
-// ✅ Deep linking config
+import { ThemeModeProvider, useThemeMode } from "./src/context/ThemeModeContext";
+import AppStatusBar from "./src/components/AppStatusBar";
+
 const linking = {
-  prefixes: [
-    "oneorganize://", // custom scheme (works in dev build / production build)
-    "https://one-organize-2.netlify.app", // if you later enable universal links/app links
-    Linking.createURL("/"), // for Expo dev URLs
-  ],
+  prefixes: ["oneorganize://", "https://one-organize-2.netlify.app", Linking.createURL("/")],
   config: {
     screens: {
-      ResetPassword: "reset-password", // must match your screen name in navigator
+      ResetPassword: "reset-password",
     },
   },
 };
 
+function AppShell() {
+  const { paperTheme, navTheme } = useThemeMode();
+
+  return (
+    <PaperProvider theme={paperTheme}>
+      <AuthProvider>
+        <AppDataProvider>
+          <NavigationContainer linking={linking} theme={navTheme}>
+            <AppStatusBar />
+            <RootNavigator />
+          </NavigationContainer>
+        </AppDataProvider>
+      </AuthProvider>
+    </PaperProvider>
+  );
+}
+
 export default function App() {
   return (
     <Provider store={store}>
-      <PaperProvider theme={paperTheme}>
-        <AuthProvider>
-          <AppDataProvider>
-            <NavigationContainer linking={linking}>
-              <RootNavigator />
-            </NavigationContainer>
-          </AppDataProvider>
-        </AuthProvider>
-      </PaperProvider>
+      <ThemeModeProvider>
+        <AppShell />
+      </ThemeModeProvider>
     </Provider>
   );
 }
