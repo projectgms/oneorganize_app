@@ -2,6 +2,7 @@
   "expo": {
     "name": "oneorganize",
     "slug": "oneorganize",
+    "scheme": "oneorganize",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,17 +14,39 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.oneorganize"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.oneorganize",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["BROWSABLE", "DEFAULT"],
+          "data": [
+            { "scheme": "oneorganize" },
+            {
+              "scheme": "https",
+              "host": "one-organize-2.netlify.app",
+              "pathPrefix": "/reset-password"
+            }
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-secure-store", "expo-font", "expo-asset"],
+    "extra": {
+      "eas": {
+        "projectId": "ddf71aa9-19ed-43c0-af77-29c4ba700088"
+      }
     }
   }
 }
