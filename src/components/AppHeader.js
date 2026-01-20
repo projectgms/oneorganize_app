@@ -35,7 +35,7 @@ export default function AppHeader({ navigation, route, options }) {
       style={[
         styles.wrapper,
         {
-          paddingTop: topInset,
+          paddingTop: 0,
           backgroundColor: theme.colors.surface,
           borderBottomColor: theme.colors.outlineVariant,
         },
@@ -70,13 +70,13 @@ export default function AppHeader({ navigation, route, options }) {
 
         {/* Right: Appearance + Bell */}
         <View style={styles.rightGroup}>
-          <Pressable onPress={openAppearance} style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
+          {/* <Pressable onPress={openAppearance} style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
             <MaterialCommunityIcons
               name="theme-light-dark"
               size={24}
               color={theme.colors.onSurface}
             />
-          </Pressable>
+          </Pressable> */}
 
           <Pressable onPress={openNotifications} style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
             <View style={{ position: "relative" }}>
