@@ -9,6 +9,8 @@ import RootNavigator from "./src/navigation/RootNavigator";
 import { AuthProvider } from "./src/context/AuthContext";
 import { AppDataProvider } from "./src/context/AppDataContext";
 import { store } from "./src/store";
+import Toast from 'react-native-toast-message';
+
 
 import { ThemeModeProvider, useThemeMode } from "./src/context/ThemeModeContext";
 import AppStatusBar from "./src/components/AppStatusBar";
@@ -33,6 +35,8 @@ function AppShell() {
             <AppStatusBar />
             <RootNavigator />
           </NavigationContainer>
+           <Toast/>
+
         </AppDataProvider>
       </AuthProvider>
     </PaperProvider>
@@ -42,6 +46,7 @@ function AppShell() {
 export default function App() {
   return (
     <Provider store={store}>
+     
       <ThemeModeProvider>
         <AppShell />
       </ThemeModeProvider>

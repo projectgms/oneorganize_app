@@ -1,5 +1,12 @@
 import React from "react";
-import { View, Pressable, StyleSheet, Platform, StatusBar } from "react-native";
+import {
+  View,
+  Pressable,
+  StyleSheet,
+  Platform,
+  StatusBar,
+  Image,
+} from "react-native";
 import { Text, Avatar, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
@@ -9,14 +16,19 @@ export default function AppHeader({ navigation, route, options }) {
   const theme = useTheme();
 
   const user = useSelector((s) => s.auth.user);
-  const brandPrimary = useSelector((s) => s.auth.brandSettings?.primary_color) || "#1677ff";
+  const brandPrimary =
+    useSelector((s) => s.auth.brandSettings?.primary_color) || "#1677ff";
   const unreadCount = useSelector((s) => s.notifications?.unreadCount || 0);
+
+  const profileData = useSelector((s) => s.profile.data);
+
+  // console.log("profileData", profileData);
 
   const name = user?.name || "User";
   const roleText = (user?.designation && user.designation) || "Employee";
 
   // ✅ Proper top spacing (no marginTop hack)
-  const topInset = Platform.OS === "android" ? (StatusBar.currentHeight || 0) : 0;
+  const topInset = Platform.OS === "android" ? StatusBar.currentHeight || 0 : 0;
 
   const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
 
@@ -29,6 +41,10 @@ export default function AppHeader({ navigation, route, options }) {
     // ✅ Drawer route you added
     navigation.navigate("Appearance");
   };
+
+  const pic = profileData?.profile_picture;
+
+  const source = typeof pic === "string" ? { uri: pic } : pic;
 
   return (
     <View
@@ -43,7 +59,11 @@ export default function AppHeader({ navigation, route, options }) {
     >
       <View style={styles.container}>
         {/* Left: hamburger */}
-        <Pressable onPress={openDrawer} style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
+        <Pressable
+          onPress={openDrawer}
+          style={styles.iconBtn}
+          android_ripple={{ color: "#00000015" }}
+        >
           <MaterialCommunityIcons
             name="menu"
             size={26}
@@ -53,16 +73,29 @@ export default function AppHeader({ navigation, route, options }) {
 
         {/* Center: avatar + name + role */}
         <View style={styles.center}>
+         {pic ? <Avatar.Image
+            size={38}
+            source={source}
+            style={{ backgroundColor: brandPrimary }}
+          /> : 
           <Avatar.Text
             size={38}
-            label={(name?.[0] || "U").toUpperCase()}
+            label={(profileData?.name[0] || "U").toUpperCase()}
             style={{ backgroundColor: brandPrimary }}
           />
+          }
+         
           <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={[styles.name, { color: theme.colors.onSurface }]} numberOfLines={1}>
-              {name}
+            <Text
+              style={[styles.name, { color: theme.colors.onSurface }]}
+              numberOfLines={1}
+            >
+              {profileData?.name}
             </Text>
-            <Text style={[styles.sub, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
+            <Text
+              style={[styles.sub, { color: theme.colors.onSurfaceVariant }]}
+              numberOfLines={1}
+            >
               {roleText}
             </Text>
           </View>
@@ -78,7 +111,11 @@ export default function AppHeader({ navigation, route, options }) {
             />
           </Pressable> */}
 
-          <Pressable onPress={openNotifications} style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
+          <Pressable
+            onPress={openNotifications}
+            style={styles.iconBtn}
+            android_ripple={{ color: "#00000015" }}
+          >
             <View style={{ position: "relative" }}>
               <MaterialCommunityIcons
                 name="bell-outline"

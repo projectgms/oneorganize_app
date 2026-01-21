@@ -38,14 +38,14 @@ export default function AvatarRow({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => {
-          const hasAvatar = !!item?.avatarUrl;
+          const hasAvatar = !!item?.profile_picture;
 
           return (
             <View style={styles.userItem}>
               <View style={[styles.avatarRing, { borderColor: ringColor }]}>
                 {hasAvatar ? (
                   <Image
-                    source={{ uri: item.avatarUrl }}
+                    source={{ uri: item.profile_picture }}
                     style={styles.avatar}
                   />
                 ) : (

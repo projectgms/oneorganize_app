@@ -14,10 +14,11 @@ import {
   changePasswordRequest,
   changePasswordSuccess,
   changePasswordFailure,
-    logoutRequest,
+  logoutRequest,
   logoutSuccess,
-  logoutFailure
+  logoutFailure,
 } from "../slices/authSlice";
+import Toast from "react-native-toast-message";
 
 // helper to extract backend error message safely
 const getErrorMessage = (err) =>
@@ -26,16 +27,18 @@ const getErrorMessage = (err) =>
   err?.message ||
   "Something went wrong";
 
-  const safeSet = async (k, v) => {
+const safeSet = async (k, v) => {
   try {
     await AsyncStorage.setItem(k, v);
   } catch (e) {}
 };
 
 const safeRemoveMany = async (keys = []) => {
-  try { await AsyncStorage.multiRemove(keys); } catch (e) {}
+  try {
+    await AsyncStorage.multiRemove(keys);
+  } catch (e) {}
 };
-  const extractLoginData = (res) => {
+const extractLoginData = (res) => {
   // supports: {data:{token,user}} OR {token,user} OR {data:{access_token,user}} etc.
   const raw = res?.data;
   const d1 = raw?.data ?? raw;
@@ -53,7 +56,6 @@ const safeRemoveMany = async (keys = []) => {
 
   return { token, user };
 };
-
 
 // LOGIN
 // function* handleLogin(action) {
@@ -98,7 +100,11 @@ function* handleLogin(action) {
     yield call(safeSet, "auth_token_type", String(tokenType));
     yield call(safeSet, "auth_user", JSON.stringify(user || null));
     yield call(safeSet, "auth_permissions", JSON.stringify(permissions || []));
-    yield call(safeSet, "auth_brand_settings", JSON.stringify(brandSettings || null));
+    yield call(
+      safeSet,
+      "auth_brand_settings",
+      JSON.stringify(brandSettings || null),
+    );
 
     yield put(
       loginSuccess({
@@ -110,7 +116,7 @@ function* handleLogin(action) {
         roles,
         permissions,
         brandSettings,
-      })
+      }),
     );
   } catch (err) {
     yield put(loginFailure(getErrorMessage(err)));
@@ -148,7 +154,7 @@ function* handleForgotPassword(action) {
         message: msg,
         email,
         token,
-      })
+      }),
     );
   } catch (err) {
     yield put(forgotPasswordFailure(getErrorMessage(err)));
@@ -165,11 +171,12 @@ function* handleResetPassword(action) {
 
     // IMPORTANT: backend expects these keys
     const password = payload.password || payload.newPassword; // allow UI to pass newPassword too
-    const confirmpassword = payload.confirmpassword || payload.confirm || payload.confirmPassword;
+    const confirmpassword =
+      payload.confirmpassword || payload.confirm || payload.confirmPassword;
 
     // tenant for pre-login requests
-  const tenant = payload?.tenant || process.env.EXPO_PUBLIC_TENANT;
-if (tenant) yield call(safeSet, "tenant", String(tenant));
+    const tenant = payload?.tenant || process.env.EXPO_PUBLIC_TENANT;
+    if (tenant) yield call(safeSet, "tenant", String(tenant));
 
     if (!email || !token || !password || !confirmpassword) {
       throw new Error("email, token, password, confirmpassword are required");
@@ -192,7 +199,7 @@ if (tenant) yield call(safeSet, "tenant", String(tenant));
       resetPasswordSuccess({
         message: msg,
         email,
-      })
+      }),
     );
   } catch (err) {
     yield put(resetPasswordFailure(getErrorMessage(err)));
@@ -203,9 +210,16 @@ if (tenant) yield call(safeSet, "tenant", String(tenant));
 function* handleChangePassword(action) {
   try {
     const res = yield call(api.post, "/auth/change-password", action.payload);
+
+    console.log("change-password payload:", action.payload);
     const msg = res?.data?.message || "Password changed";
     yield put(changePasswordSuccess(msg));
   } catch (err) {
+    const apiMsg = err?.message;
+    Toast.show({
+      text1: apiMsg,
+      type:'error'
+    });
     yield put(changePasswordFailure(getErrorMessage(err)));
   }
 }
@@ -240,5 +254,5 @@ export default function* authSaga() {
   yield takeLatest(forgotPasswordRequest.type, handleForgotPassword);
   yield takeLatest(resetPasswordRequest.type, handleResetPassword);
   yield takeLatest(changePasswordRequest.type, handleChangePassword);
-   yield takeLatest(logoutRequest.type, handleLogout);
+  yield takeLatest(logoutRequest.type, handleLogout);
 }

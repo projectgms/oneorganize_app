@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from 'react-native-paper';
 
 /**
  * task shape (example):
@@ -31,6 +32,8 @@ export default function TaskCard({
 
   const endDateLabel = formatDate(task?.END_DATE) || task?.END_DATE || "";
 
+  const theme = useTheme();
+
   const priorityStyles = getPriorityPill(task?.PRIORITY);
   const statusStyles = getStatusPill(task?.STATUS);
 
@@ -38,11 +41,11 @@ export default function TaskCard({
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={({ pressed }) => [styles.card, pressed && onPress ? { opacity: 0.92 } : null]}
+      style={({ pressed }) => [styles.card, {backgroundColor: theme.colors.background, borderColor:theme.colors.onSurface}]}
     >
       {/* Header */}
       <View style={styles.headerRow}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, {color:theme.colors.onSurface }]} numberOfLines={2}>
           {task?.TASK_TITLE || "Untitled task"}
         </Text>
 
@@ -55,7 +58,7 @@ export default function TaskCard({
 
       {/* Description */}
       {!!task?.DESCRIPTION && (
-        <Text style={styles.desc} numberOfLines={2}>
+        <Text style={[styles.desc, {color: theme.colors.onSurface}]} numberOfLines={2}>
           {task.DESCRIPTION}
         </Text>
       )}
@@ -64,7 +67,7 @@ export default function TaskCard({
       <View style={styles.projectRow}>
         <View style={styles.projectLeft}>
           <MaterialCommunityIcons name="file-document-outline" size={16} color="#6B7280" />
-          <Text style={styles.projectName} numberOfLines={1}>
+          <Text style={[styles.projectName, {color: theme.colors.onSurface}]} numberOfLines={1}>
             {task?.PROJECT || "Project"}
           </Text>
         </View>
@@ -168,16 +171,16 @@ function formatDate(input) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#FFFFFF",
+    // backgroundColor: "#FFFFFF",
     borderRadius: 14,
     padding: 14,
-    borderWidth: 1,
-    borderColor: "#EEF2F7",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+    // borderWidth: 1,
+    // borderColor: "#EEF2F7",
+    // shadowColor: "#000",
+    // shadowOpacity: 0.06,
+    // shadowRadius: 10,
+    // shadowOffset: { width: 0, height: 4 },
+    // elevation: 2,
   },
 
   headerRow: {
