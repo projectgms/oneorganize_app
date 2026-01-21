@@ -1,57 +1,40 @@
 import React from "react";
-import { View, Pressable, StyleSheet, Platform, StatusBar } from "react-native";
+import { View, Pressable, StyleSheet, Platform } from "react-native";
 import { Text, Avatar, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { DrawerActions } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function AppHeader({ navigation, route, options }) {
+export default function AppHeader({ navigation }) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets(); // ✅ auto top padding for iOS + Android
 
   const user = useSelector((s) => s.auth.user);
   const brandPrimary = useSelector((s) => s.auth.brandSettings?.primary_color) || "#1677ff";
   const unreadCount = useSelector((s) => s.notifications?.unreadCount || 0);
 
   const name = user?.name || "User";
-  const roleText = (user?.designation && user.designation) || "Employee";
-
-  // ✅ Proper top spacing (no marginTop hack)
-  const topInset = Platform.OS === "android" ? (StatusBar.currentHeight || 0) : 0;
+  const roleText = user?.designation || "Employee";
 
   const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
-
-  const openNotifications = () => {
-    // navigation.navigate("Notifications"); // if you have it later
-    console.log("Open Notifications");
-  };
-
-  const openAppearance = () => {
-    // ✅ Drawer route you added
-    navigation.navigate("Appearance");
-  };
 
   return (
     <View
       style={[
         styles.wrapper,
         {
-          paddingTop: 0,
+          paddingTop: insets.top, // ✅ automatic
           backgroundColor: theme.colors.surface,
           borderBottomColor: theme.colors.outlineVariant,
         },
       ]}
     >
       <View style={styles.container}>
-        {/* Left: hamburger */}
         <Pressable onPress={openDrawer} style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
-          <MaterialCommunityIcons
-            name="menu"
-            size={26}
-            color={theme.colors.onSurface}
-          />
+          <MaterialCommunityIcons name="menu" size={26} color={theme.colors.onSurface} />
         </Pressable>
 
-        {/* Center: avatar + name + role */}
         <View style={styles.center}>
           <Avatar.Text
             size={38}
@@ -68,31 +51,15 @@ export default function AppHeader({ navigation, route, options }) {
           </View>
         </View>
 
-        {/* Right: Appearance + Bell */}
         <View style={styles.rightGroup}>
-          {/* <Pressable onPress={openAppearance} style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
-            <MaterialCommunityIcons
-              name="theme-light-dark"
-              size={24}
-              color={theme.colors.onSurface}
-            />
-          </Pressable> */}
-
-          <Pressable onPress={openNotifications} style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
+          <Pressable style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
             <View style={{ position: "relative" }}>
-              <MaterialCommunityIcons
-                name="bell-outline"
-                size={26}
-                color={theme.colors.onSurface}
-              />
+              <MaterialCommunityIcons name="bell-outline" size={26} color={theme.colors.onSurface} />
               {unreadCount > 0 && (
                 <View
                   style={[
                     styles.dot,
-                    {
-                      backgroundColor: "#ff3b30",
-                      borderColor: theme.colors.surface,
-                    },
+                    { backgroundColor: "#ff3b30", borderColor: theme.colors.surface },
                   ]}
                 />
               )}
@@ -107,8 +74,6 @@ export default function AppHeader({ navigation, route, options }) {
 const styles = StyleSheet.create({
   wrapper: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-
-    // ✅ AppBar shadow
     ...Platform.select({
       android: { elevation: 4 },
       ios: {
@@ -120,7 +85,7 @@ const styles = StyleSheet.create({
     }),
   },
   container: {
-    height: 56,
+    height: 56, // header content height (safe area is added above)
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
