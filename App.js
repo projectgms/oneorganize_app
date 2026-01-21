@@ -55,7 +55,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { Provider as PaperProvider } from "react-native-paper";
 import { Provider } from "react-redux";
 import * as Linking from "expo-linking";
-import { SafeAreaProvider } from "react-native-safe-area-context"; // ✅ add
+import { SafeAreaProvider } from "react-native-safe-area-context"; 
 
 import RootNavigator from "./src/navigation/RootNavigator";
 import { AuthProvider } from "./src/context/AuthContext";
@@ -90,7 +90,7 @@ function AppShell() {
 export default function App() {
   return (
     <Provider store={store}>
-      <SafeAreaProvider> {/* ✅ add this */}
+      <SafeAreaProvider> 
         <ThemeModeProvider>
           <AppShell />
         </ThemeModeProvider>
