@@ -11,13 +11,20 @@ export default function AppHeader({ navigation }) {
   const insets = useSafeAreaInsets(); // ✅ auto top padding for iOS + Android
 
   const user = useSelector((s) => s.auth.user);
-  const brandPrimary = useSelector((s) => s.auth.brandSettings?.primary_color) || "#1677ff";
+  const brandPrimary =
+    useSelector((s) => s.auth.brandSettings?.primary_color) || "#1677ff";
   const unreadCount = useSelector((s) => s.notifications?.unreadCount || 0);
+
+  const profileData = useSelector((s) => s.profile.data);
+
+  // console.log("profileData", profileData);
 
   const name = user?.name || "User";
   const roleText = user?.designation || "Employee";
 
   const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
+  const pic = profileData?.profile_picture;
+  const source = typeof pic === "string" ? { uri: pic } : pic;
 
   return (
     <View
@@ -36,16 +43,29 @@ export default function AppHeader({ navigation }) {
         </Pressable>
 
         <View style={styles.center}>
+         {pic ? <Avatar.Image
+            size={38}
+            source={source}
+            style={{ backgroundColor: brandPrimary }}
+          /> : 
           <Avatar.Text
             size={38}
-            label={(name?.[0] || "U").toUpperCase()}
+            label={(profileData?.name[0] || "U").toUpperCase()}
             style={{ backgroundColor: brandPrimary }}
           />
+          }
+         
           <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={[styles.name, { color: theme.colors.onSurface }]} numberOfLines={1}>
-              {name}
+            <Text
+              style={[styles.name, { color: theme.colors.onSurface }]}
+              numberOfLines={1}
+            >
+              {profileData?.name}
             </Text>
-            <Text style={[styles.sub, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
+            <Text
+              style={[styles.sub, { color: theme.colors.onSurfaceVariant }]}
+              numberOfLines={1}
+            >
               {roleText}
             </Text>
           </View>

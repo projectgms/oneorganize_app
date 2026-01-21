@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 14,
     // backgroundColor: "transperent",
-    padding: 6,
+    padding: 0,
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 8,

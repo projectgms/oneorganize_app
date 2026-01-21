@@ -45,7 +45,7 @@ export function ThemeModeProvider({ children }) {
         ...base.colors,
         background: paperTheme.colors.background,
         card: paperTheme.colors.surface,
-        text: paperTheme.colors.onSurface,
+        title: paperTheme.colors.onSurface,
         border: paperTheme.colors.outlineVariant,
         primary: paperTheme.colors.primary,
         notification: paperTheme.colors.error,

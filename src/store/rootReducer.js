@@ -1,9 +1,13 @@
 import { combineReducers } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import hrmReducer from "./slices/hrmSlice";
+import profileReducer from "./slices/ProfileSlice";
+
+
 const rootReducer = combineReducers({
   auth: authReducer,
-    hrm: hrmReducer,
+  hrm: hrmReducer,
+  profile: profileReducer, 
 });
 
 export default rootReducer;

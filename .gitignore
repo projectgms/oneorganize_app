@@ -34,3 +34,4 @@ ios/DerivedData/
 Thumbs.db
 .vscode/
 .idea/
+package-lock.json
