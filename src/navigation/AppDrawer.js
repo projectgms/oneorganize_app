@@ -8,6 +8,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useTheme } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // ✅ ADD
 
 import MainTabs from "./MainTabs";
 import ProfileScreen from "../screens/app/ProfileScreen";
@@ -22,14 +23,49 @@ import OneOrganizeLogo from "./../../assets/adaptive-icon.png";
 
 const Drawer = createDrawerNavigator();
 
+function CustomDrawerContent(props) {
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+
+  return (
+    <DrawerContentScrollView
+      {...props}
+      contentContainerStyle={{
+        paddingTop: insets.top + 8, // ✅ FIX notch/camera overlap
+        paddingBottom: insets.bottom + 8,
+      }}
+    >
+      <View
+        style={{
+          paddingVertical: 10,
+          marginHorizontal: 12,
+          marginBottom: 12,
+          borderRadius: 12,
+          alignItems: "center",
+          borderWidth: 1,
+          borderColor: theme.colors.outlineVariant,
+          backgroundColor: theme.colors.surface, // ✅ works in dark mode
+        }}
+      >
+        <Image
+          source={OneOrganizeLogo}
+          style={{ width: 120, height: 60 }}
+          resizeMode="contain"
+        />
+      </View>
+
+      <DrawerItemList {...props} />
+    </DrawerContentScrollView>
+  );
+}
+
 export default function AppDrawer() {
   const dispatch = useDispatch();
   const theme = useTheme();
 
   const permissions = useSelector((s) => s.auth.permissions || []);
   const brandPrimary =
-    useSelector((s) => s.auth.brandSettings?.primary_color) ||
-    theme.colors.primary;
+    useSelector((s) => s.auth.brandSettings?.primary_color) || theme.colors.primary;
 
   const canSeeLeave = hasAnyPermission(permissions, [
     "show leave",
@@ -58,32 +94,7 @@ export default function AppDrawer() {
         drawerStyle: { backgroundColor: theme.colors.surface },
         sceneContainerStyle: { backgroundColor: theme.colors.background },
       }}
-      drawerContent={(props) => (
-        <DrawerContentScrollView
-          {...props}
-          contentContainerStyle={{ paddingTop: 0 }}
-        >
-          <View
-            style={{
-              paddingVertical: 5,
-              marginBottom:10,
-              borderRadius:12,
-              alignItems: "center",
-              borderBottomWidth: 1,
-              borderBottomColor: theme.colors.outlineVariant,
-              backgroundColor: "#fff",
-            }}
-          >
-            <Image
-              source={OneOrganizeLogo}
-              style={{ width: 100, height: 72,  }}
-              resizeMode="contain"
-            />
-          </View>
-
-          <DrawerItemList {...props} />
-        </DrawerContentScrollView>
-      )}
+      drawerContent={(props) => <CustomDrawerContent {...props} />} // ✅ USE THIS
     >
       <Drawer.Screen
         name="Home"
@@ -91,11 +102,7 @@ export default function AppDrawer() {
         options={{
           title: "Dashboard",
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="home-outline"
-              color={color}
-              size={size}
-            />
+            <MaterialCommunityIcons name="home-outline" color={color} size={size} />
           ),
         }}
       />
@@ -137,11 +144,7 @@ export default function AppDrawer() {
         options={{
           title: "Change Password",
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="lock-reset"
-              color={color}
-              size={size}
-            />
+            <MaterialCommunityIcons name="lock-reset" color={color} size={size} />
           ),
         }}
       />
@@ -152,11 +155,7 @@ export default function AppDrawer() {
         options={{
           title: "Appearance",
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="theme-light-dark"
-              color={color}
-              size={size}
-            />
+            <MaterialCommunityIcons name="theme-light-dark" color={color} size={size} />
           ),
         }}
       />
