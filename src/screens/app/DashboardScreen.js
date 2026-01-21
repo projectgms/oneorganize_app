@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ScrollView, View } from "react-native";
-import { Card, ProgressBar, Text, Button } from "react-native-paper";
+import { Card, ProgressBar, Text, Button, useTheme } from "react-native-paper";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchHrmOverviewRequest } from "../../store/slices/hrmSlice";
+import AvatarRow from "./components/DashboardScreen/AvatarRow";
+import CollapsibleSection from "./components/DashboardScreen/CollapsibleSection";
+import TaskCard from "./components/DashboardScreen/TaskCard";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -34,8 +37,19 @@ const formatDateLabel = (yyyyMmDd) => {
 export default function DashboardScreen({ navigation }) {
   const dispatch = useDispatch();
 
+  const theme = useTheme();
+
   const user = useSelector((s) => s.auth.user);
-  const { employeeAttendance, loading, error } = useSelector((s) => s.hrm);
+  const {
+    employeeAttendance,
+    loading,
+    error,
+    birthdays,
+    joiningAnniversary,
+    todaysLeave,
+  } = useSelector((s) => s.hrm);
+
+  // console.log("employeeAttendance:",employeeAttendance);
 
   useEffect(() => {
     dispatch(fetchHrmOverviewRequest());
@@ -104,8 +118,8 @@ export default function DashboardScreen({ navigation }) {
       lateSec > 0 && clockIn && clockIn !== "00:00:00"
         ? `Arrived ${secondsToHms(lateSec)} late at ${clockIn}`
         : clockIn && clockIn !== "00:00:00"
-        ? `Clocked in at ${clockIn}`
-        : "Not clocked in yet";
+          ? `Clocked in at ${clockIn}`
+          : "Not clocked in yet";
 
     return {
       dateLabel,
@@ -121,7 +135,9 @@ export default function DashboardScreen({ navigation }) {
     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
       <Card style={{ marginBottom: 12, backgroundColor: "#0b1220" }}>
         <Card.Content>
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
             <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>
               Today
             </Text>
@@ -140,7 +156,9 @@ export default function DashboardScreen({ navigation }) {
 
           <View style={{ height: 16 }} />
 
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
             <Text style={{ color: "#fff", fontSize: 18, fontWeight: "700" }}>
               ⏱ {computed.workedStr}
             </Text>
@@ -153,14 +171,20 @@ export default function DashboardScreen({ navigation }) {
 
           <ProgressBar progress={computed.progress} />
 
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginTop: 6,
+            }}
+          >
             <Text style={{ color: "#64748b" }}>0 hrs</Text>
             <Text style={{ color: "#64748b" }}>{computed.targetLabel}</Text>
           </View>
         </Card.Content>
       </Card>
 
-      <Card style={{ marginBottom: 12 }}>
+      {/* <Card style={{ marginBottom: 12 }}>
         <Card.Title
           title={`Hi, ${user?.name ?? "User"} 👋`}
           subtitle="Quick actions"
@@ -170,8 +194,100 @@ export default function DashboardScreen({ navigation }) {
             Apply for Leave
           </Button>
         </Card.Content>
-      </Card>
+      </Card> */}
+
+      {/* Today On Leave Row Below  */}
+
+      {/* <AvatarRow
+        title="On Leave Today"
+        users={todaysLeave}
+        ringColor="#7393B3"
+        fallbackIcon="account-circle"
+      /> */}
+
+      {/* Birthday Row Below  */}
+
+      {/* <AvatarRow
+        title="Birthdays"
+        // users={[
+        //   { id: 1, name: "Kadin Vetrovs", avatarUrl: "" }, // will show icon
+        //   {
+        //     id: 2,
+        //     name: "Zaire Botosh",
+        //     avatarUrl: "https://i.pravatar.cc/200?img=2",
+        //   },
+        // ]}
+        users={birthdays}
+        ringColor="#98FB98"
+        fallbackIcon="account-circle"
+      /> */}
+
+      {/* Joining Anniversary Row Below */}
+
+      {/* <AvatarRow
+        title="Joining Anniversaries"
+        users={joiningAnniversary}
+        ringColor="#FFC0CB"
+        fallbackIcon="account-circle"
+      /> */}
+
+      <CollapsibleSection
+        collapsedContent={
+          <AvatarRow
+            title="On Leave Today"
+            users={todaysLeave}
+            ringColor="#7393B3"
+            fallbackIcon="account-circle"
+          />
+        }
+        badgeTextCollapsed="Today's Birthdays"
+        badgeTextCollapsed2="Today's Joining Anniversary"
+      >
+        {/* This part is hidden until expanded */}
+        <AvatarRow
+          title="Birthdays"
+          // users={[
+          //   { id: 1, name: "Kadin Vetrovs", avatarUrl: "" }, // will show icon
+          //   {
+          //     id: 2,
+          //     name: "Zaire Botosh",
+          //     avatarUrl: "https://i.pravatar.cc/200?img=2",
+          //   },
+          // ]}
+          users={birthdays}
+          ringColor="#98FB98"
+          fallbackIcon="account-circle"
+        />
+
+        {/* Joining Anniversary Row Below */}
+
+        <AvatarRow
+          title="Joining Anniversaries"
+          users={joiningAnniversary}
+          ringColor="#FFC0CB"
+          fallbackIcon="account-circle"
+        />
+      </CollapsibleSection>
+
+      <Text style={{ fontSize: 16, fontWeight: "600", marginVertical:12, color: theme.colors.onSurface }}>Today's Tasks</Text>
+
+      <TaskCard
+        task={{
+          PROJECT: "Attendance Keeper Mobile",
+          TASK_SEQ: "15",
+          TASK_TITLE: "Integrate Worklog API with Screen",
+          DESCRIPTION:
+            "Brainstorming brings team members' diverse experience into play.",
+          PRIORITY: "High",
+          STATUS: "In Progress",
+          PROGRESS: 65,
+          EST_HOURS: 12,
+          START_DATE: "2023-08-10",
+          END_DATE: "2023-08-15",
+          ASSIGNED_TO: "Ahmad",
+        }}
+        onPress={() => console.log("open task")}
+      />
     </ScrollView>
   );
 }
- 

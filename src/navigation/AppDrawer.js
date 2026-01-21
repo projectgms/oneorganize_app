@@ -1,6 +1,10 @@
 import React from "react";
-import { Alert } from "react-native";
-import { createDrawerNavigator } from "@react-navigation/drawer";
+import { Alert, View, Image } from "react-native";
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItemList,
+} from "@react-navigation/drawer";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useTheme } from "react-native-paper";
@@ -14,6 +18,7 @@ import AppHeader from "../components/AppHeader";
 
 import { hasAnyPermission } from "../store/selectors/authSelectors";
 import { logoutRequest } from "../store/slices/authSlice";
+import OneOrganizeLogo from "./../../assets/adaptive-icon.png";
 
 const Drawer = createDrawerNavigator();
 
@@ -23,7 +28,8 @@ export default function AppDrawer() {
 
   const permissions = useSelector((s) => s.auth.permissions || []);
   const brandPrimary =
-    useSelector((s) => s.auth.brandSettings?.primary_color) || theme.colors.primary;
+    useSelector((s) => s.auth.brandSettings?.primary_color) ||
+    theme.colors.primary;
 
   const canSeeLeave = hasAnyPermission(permissions, [
     "show leave",
@@ -35,7 +41,11 @@ export default function AppDrawer() {
   const onLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Logout", style: "destructive", onPress: () => dispatch(logoutRequest()) },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: () => dispatch(logoutRequest()),
+      },
     ]);
   };
 
@@ -48,6 +58,32 @@ export default function AppDrawer() {
         drawerStyle: { backgroundColor: theme.colors.surface },
         sceneContainerStyle: { backgroundColor: theme.colors.background },
       }}
+      drawerContent={(props) => (
+        <DrawerContentScrollView
+          {...props}
+          contentContainerStyle={{ paddingTop: 0 }}
+        >
+          <View
+            style={{
+              paddingVertical: 5,
+              marginBottom:10,
+              borderRadius:12,
+              alignItems: "center",
+              borderBottomWidth: 1,
+              borderBottomColor: theme.colors.outlineVariant,
+              backgroundColor: "#fff",
+            }}
+          >
+            <Image
+              source={OneOrganizeLogo}
+              style={{ width: 100, height: 72,  }}
+              resizeMode="contain"
+            />
+          </View>
+
+          <DrawerItemList {...props} />
+        </DrawerContentScrollView>
+      )}
     >
       <Drawer.Screen
         name="Home"
@@ -55,7 +91,11 @@ export default function AppDrawer() {
         options={{
           title: "Dashboard",
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home-outline" color={color} size={size} />
+            <MaterialCommunityIcons
+              name="home-outline"
+              color={color}
+              size={size}
+            />
           ),
         }}
       />
@@ -65,7 +105,11 @@ export default function AppDrawer() {
         component={ProfileScreen}
         options={{
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="account-circle-outline" color={color} size={size} />
+            <MaterialCommunityIcons
+              name="account-circle-outline"
+              color={color}
+              size={size}
+            />
           ),
         }}
       />
@@ -77,7 +121,11 @@ export default function AppDrawer() {
           options={{
             title: "Leave Management",
             drawerIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="clipboard-text-outline" color={color} size={size} />
+              <MaterialCommunityIcons
+                name="clipboard-text-outline"
+                color={color}
+                size={size}
+              />
             ),
           }}
         />
@@ -89,7 +137,11 @@ export default function AppDrawer() {
         options={{
           title: "Change Password",
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="lock-reset" color={color} size={size} />
+            <MaterialCommunityIcons
+              name="lock-reset"
+              color={color}
+              size={size}
+            />
           ),
         }}
       />
@@ -100,7 +152,11 @@ export default function AppDrawer() {
         options={{
           title: "Appearance",
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="theme-light-dark" color={color} size={size} />
+            <MaterialCommunityIcons
+              name="theme-light-dark"
+              color={color}
+              size={size}
+            />
           ),
         }}
       />

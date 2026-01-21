@@ -16,6 +16,8 @@ function* handleFetchHrmOverview() {
   try {
     const res = yield call(api.get, "/hr/hrm-overview");
     const payload = res?.data?.data; // ✅ your real response: {success,message,data:{...}}
+
+    console.log("HRM DATA: ", payload);
     yield put(fetchHrmOverviewSuccess(payload));
   } catch (err) {
     yield put(fetchHrmOverviewFailure(getErrorMessage(err)));
