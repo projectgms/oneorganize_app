@@ -12,15 +12,15 @@ import {
 } from "react-native-paper";
 import { useAuth } from "../../context/AuthContext";
 
-import {changePasswordRequest} from './../../store/slices/authSlice'
-import { useDispatch, useSelector } from 'react-redux';
+import { changePasswordRequest } from "./../../store/slices/authSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function ChangePasswordScreen({ navigation }) {
   const { changePassword } = useAuth();
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const {loading} = useSelector((s) => s.auth)
+  const { loading } = useSelector((s) => s.auth);
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -37,16 +37,23 @@ export default function ChangePasswordScreen({ navigation }) {
   const onSubmit = async () => {
     setErr("");
 
-    if (!oldPassword || !newPassword || !confirm) return setErr("All fields are required");
-    if (newPassword.length < 6) return setErr("New password must be at least 6 characters");
+    if (!oldPassword || !newPassword || !confirm)
+      return setErr("All fields are required");
+    if (newPassword.length < 6)
+      return setErr("New password must be at least 6 characters");
     if (newPassword !== confirm) return setErr("Passwords do not match");
 
     try {
       // setLoading(true);
       // const res = await changePassword({ oldPassword, newPassword });
 
-      dispatch(changePasswordRequest({password: newPassword, old_password: oldPassword, password_confirmation: newPassword}))
-      
+      dispatch(
+        changePasswordRequest({
+          password: newPassword,
+          old_password: oldPassword,
+          password_confirmation: newPassword,
+        }),
+      );
 
       if (!res?.ok) {
         setErr(res?.message || "Change failed");
@@ -63,7 +70,9 @@ export default function ChangePasswordScreen({ navigation }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       {/* Header (same as Edit Profile) */}
       <View style={styles.header}>
         <IconButton
@@ -162,14 +171,11 @@ export default function ChangePasswordScreen({ navigation }) {
             loading={loading}
             disabled={loading}
             contentStyle={{ height: 54 }}
-            style={[
-              styles.saveBtn,
-              { backgroundColor: theme.colors.background, borderColor: theme.colors.onSurfaceVariant },
-            ]}
+            style={[styles.saveBtn, { backgroundColor: theme.colors.primary }]}
             labelStyle={{
               fontSize: 16,
               fontWeight: "700",
-              color: theme.colors.onSurface,
+              color: theme.colors.onPrimary,
             }}
           >
             Update Password
@@ -204,5 +210,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
 
-  saveBtn: { borderRadius: 14, marginTop: 18, borderWidth:1 },
+  saveBtn: { borderRadius: 14, marginTop: 18, borderWidth: 1 },
 });

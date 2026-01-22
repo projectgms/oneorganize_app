@@ -3,7 +3,7 @@ import { View, Pressable, StyleSheet, Platform } from "react-native";
 import { Text, Avatar, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { DrawerActions } from "@react-navigation/native";
+import { DrawerActions, useNavigationState } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AppHeader({ navigation }) {
@@ -15,6 +15,8 @@ export default function AppHeader({ navigation }) {
     useSelector((s) => s.auth.brandSettings?.primary_color) || "#1677ff";
   const unreadCount = useSelector((s) => s.notifications?.unreadCount || 0);
 
+  const annoucements = useSelector((s) => s.hrm.annoucements);
+
   const profileData = useSelector((s) => s.profile.data);
 
   // console.log("profileData", profileData);
@@ -25,6 +27,11 @@ export default function AppHeader({ navigation }) {
   const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
   const pic = profileData?.profile_picture;
   const source = typeof pic === "string" ? { uri: pic } : pic;
+
+  const currentRouteName = useNavigationState(
+    (state) => state.routes[state.index]?.name,
+  );
+  const isActive = currentRouteName === "Notifications";
 
   return (
     <View
@@ -38,23 +45,33 @@ export default function AppHeader({ navigation }) {
       ]}
     >
       <View style={styles.container}>
-        <Pressable onPress={openDrawer} style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
-          <MaterialCommunityIcons name="menu" size={26} color={theme.colors.onSurface} />
+        <Pressable
+          onPress={openDrawer}
+          style={styles.iconBtn}
+          android_ripple={{ color: "#00000015" }}
+        >
+          <MaterialCommunityIcons
+            name="menu"
+            size={26}
+            color={theme.colors.onSurface}
+          />
         </Pressable>
 
         <View style={styles.center}>
-         {pic ? <Avatar.Image
-            size={38}
-            source={source}
-            style={{ backgroundColor: brandPrimary }}
-          /> : 
-          <Avatar.Text
-            size={38}
-            label={(profileData?.name[0] || "U").toUpperCase()}
-            style={{ backgroundColor: brandPrimary }}
-          />
-          }
-         
+          {pic ? (
+            <Avatar.Image
+              size={38}
+              source={source}
+              style={{ backgroundColor: brandPrimary }}
+            />
+          ) : (
+            <Avatar.Text
+              size={38}
+              label={(profileData?.name[0] || "U").toUpperCase()}
+              style={{ backgroundColor: brandPrimary }}
+            />
+          )}
+
           <View style={{ marginLeft: 10, flex: 1 }}>
             <Text
               style={[styles.name, { color: theme.colors.onSurface }]}
@@ -72,14 +89,34 @@ export default function AppHeader({ navigation }) {
         </View>
 
         <View style={styles.rightGroup}>
-          <Pressable style={styles.iconBtn} android_ripple={{ color: "#00000015" }}>
+          <Pressable
+            style={[
+              styles.iconBtn,
+              isActive && {
+                backgroundColor: theme.colors.primaryContainer,
+                borderRadius: 12,
+              },
+            ]}
+            android_ripple={{ color: "#00000015" }}
+            onPress={() => {
+              if (!isActive) navigation.navigate("Notifications");
+            }}
+          >
             <View style={{ position: "relative" }}>
-              <MaterialCommunityIcons name="bell-outline" size={26} color={theme.colors.onSurface} />
-              {unreadCount > 0 && (
+              <MaterialCommunityIcons
+                name={isActive ? "bell" : "bell-outline"}
+                size={26}
+                color={isActive ? theme.colors.primary : theme.colors.onSurface}
+              />
+
+              {annoucements?.length > 0 && (
                 <View
                   style={[
                     styles.dot,
-                    { backgroundColor: "#ff3b30", borderColor: theme.colors.surface },
+                    {
+                      backgroundColor: "#ff3b30",
+                      borderColor: theme.colors.surface,
+                    },
                   ]}
                 />
               )}
