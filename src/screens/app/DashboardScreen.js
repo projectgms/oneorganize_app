@@ -10,6 +10,7 @@ import TaskCard from "./components/DashboardScreen/TaskCard";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TodayCardSkeleton from "./components/DashboardScreen/Skeletons/TodayCardSkeleton";
 import OnLeaveTodaySkeleton from "./components/DashboardScreen/Skeletons/OnLeaveTodaySkeleton";
+import { useFocusEffect } from '@react-navigation/native';
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -59,10 +60,13 @@ export default function DashboardScreen({ navigation }) {
 
   // console.log("employeeAttendance:",employeeAttendance);
 
-  useEffect(() => {
+ useFocusEffect(
+  React.useCallback(() => {
+    // console.log("Screen focused, making API calls");
     dispatch(fetchHrmOverviewRequest());
     dispatch(getProfileReq());
-  }, []);
+  }, [dispatch])
+);
 
   // ✅ timer tick
   const [nowTs, setNowTs] = useState(Date.now());

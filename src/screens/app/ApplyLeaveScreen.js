@@ -1,18 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useMemo } from "react";
 import { ScrollView, View, StyleSheet, TouchableOpacity } from "react-native";
-import {
-  Button,
-  Card,
-  HelperText,
-  IconButton,
-  Text,
-  TextInput,
-  useTheme,
-} from "react-native-paper";
+import { Button, Card, HelperText, Text, TextInput, useTheme, IconButton } from "react-native-paper";
 import { Dropdown } from "react-native-element-dropdown";
-import { DatePickerModal } from "react-native-paper-dates";
-import { format } from "date-fns";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { format } from "date-fns";
 import { useAppData } from "../../context/AppDataContext";
 import { createLeaveReq } from "./../../store/slices/leaveManageSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -28,11 +20,8 @@ const durationOptions = [
 export default function ApplyLeaveScreen({ navigation }) {
   const theme = useTheme();
   const dispatch = useDispatch();
-
   const { loading } = useSelector((s) => s.leaveManage);
   const user = useSelector((s) => s.auth.user);
-
-  console.log("user data: ",user)
 
   const { addLeave } = useAppData();
 
@@ -83,15 +72,13 @@ export default function ApplyLeaveScreen({ navigation }) {
           start_date: startLabel,
           end_date: isMultiple ? endLabel : startLabel,
           leave_reason: reason,
-        }),
+        })
       );
 
-      // reset (optional)
       setDuration(null);
       setStartDate(null);
-      setEndDate(null)
+      setEndDate(null);
       setReason("");
-      // navigation?.goBack?.();
     } finally {
       setSaving(false);
     }
@@ -205,34 +192,36 @@ export default function ApplyLeaveScreen({ navigation }) {
             </View>
             <View style={{ width: 12 }} />
 
-            {isMultiple && <View style={{ flex: 1 }}>
-              <Text style={[styles.label, { color: theme.colors.onSurface }]}>
-                End Date
-              </Text>
-
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() => setOpenEnd(true)}
-                style={[
-                  styles.dateBox,
-                  { backgroundColor: fieldBg, borderColor: border },
-                ]}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.onSurface,
-                    opacity: endLabel ? 1 : 0.6,
-                  }}
-                >
-                  {endLabel || "Select date"}
+            {isMultiple && (
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.label, { color: theme.colors.onSurface }]}>
+                  End Date
                 </Text>
-                <MaterialCommunityIcons
-                  name="calendar-blank"
-                  size={18}
-                  color={theme.colors.onSurface}
-                />
-              </TouchableOpacity>
-            </View>}
+
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => setOpenEnd(true)}
+                  style={[
+                    styles.dateBox,
+                    { backgroundColor: fieldBg, borderColor: border },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      color: theme.colors.onSurface,
+                      opacity: endLabel ? 1 : 0.6,
+                    }}
+                  >
+                    {endLabel || "Select date"}
+                  </Text>
+                  <MaterialCommunityIcons
+                    name="calendar-blank"
+                    size={18}
+                    color={theme.colors.onSurface}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* Reason */}
@@ -285,32 +274,30 @@ export default function ApplyLeaveScreen({ navigation }) {
       </Card>
 
       {/* Start date modal */}
-      <DatePickerModal
-        locale="enGB"
-        mode="single"
-        visible={openStart}
-        onDismiss={() => setOpenStart(false)}
-        date={startDate || new Date()}
-        onConfirm={({ date }) => {
-          setOpenStart(false);
-          setStartDate(date);
-          if (endDate && date && endDate < date) setEndDate(null);
-        }}
-      />
+      {openStart && (
+        <DateTimePicker
+          value={startDate || new Date()}
+          mode="date"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setOpenStart(false);
+            if (selectedDate) setStartDate(selectedDate);
+          }}
+        />
+      )}
 
       {/* End date modal */}
-      <DatePickerModal
-        locale="enGB"
-        mode="single"
-        visible={openEnd}
-        onDismiss={() => setOpenEnd(false)}
-        date={endDate || startDate || new Date()}
-        onConfirm={({ date }) => {
-          setOpenEnd(false);
-          setEndDate(date);
-        }}
-        validRange={startDate ? { startDate } : undefined}
-      />
+      {openEnd && (
+        <DateTimePicker
+          value={endDate || startDate || new Date()}
+          mode="date"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setOpenEnd(false);
+            if (selectedDate) setEndDate(selectedDate);
+          }}
+        />
+      )}
     </ScrollView>
   );
 }

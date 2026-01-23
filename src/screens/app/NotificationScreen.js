@@ -13,7 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 import { fetchHrmOverviewRequest } from "./../../store/slices/hrmSlice";
 import { useDispatch, useSelector } from "react-redux";
 import {NotificationSkeletonCard} from "./components/NotificationScreen/NotificationSkeletonCard";
-
+import { useFocusEffect } from '@react-navigation/native';
 /**
  * Replace this with your real data from Redux/API.
  * Example: const announcements = useSelector(s => s.app.announcements)
@@ -40,9 +40,12 @@ export default function NotificationScreen() {
 
   const dispatch = useDispatch();
 
-  useEffect(() => {
+ useFocusEffect(
+  React.useCallback(() => {
     dispatch(fetchHrmOverviewRequest());
-  }, []);
+    // dispatch(getProfileReq());
+  }, [dispatch])
+);
 
   const { loading, annoucements } = useSelector((s) => s.hrm);
 

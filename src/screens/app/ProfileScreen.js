@@ -11,13 +11,21 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-import { updateProfileReq } from "./../../store/slices/ProfileSlice";
+import {
+  updateProfileReq,
+  getProfileReq,
+} from "./../../store/slices/ProfileSlice";
 import Toast from "react-native-toast-message";
+import { useFocusEffect } from "@react-navigation/native";
+import { EditProfileSkeleton } from './components/ProfileScreen/EditProfileSkeleton';
+
 
 export default function EditProfileScreen({ navigation }) {
   const profileData = useSelector((s) => s.profile.data);
 
   const profileDataLoading = useSelector((s) => s.profile.profileLoading);
+
+  const getProfileLoading = useSelector((s) => s.profile.getProfileLoading);
 
   const [name, setName] = useState(profileData?.name || "Name");
   const [photoUri, setPhotoUri] = useState(profileData?.profile_picture);
@@ -26,6 +34,12 @@ export default function EditProfileScreen({ navigation }) {
   const user = useSelector((s) => s.auth.user);
 
   const dispatch = useDispatch();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      dispatch(getProfileReq());
+    }, [dispatch]),
+  );
 
   const theme = useTheme();
 
@@ -109,6 +123,10 @@ export default function EditProfileScreen({ navigation }) {
   const surface = theme.colors.surface; // card/button bg
   const onSurface = theme.colors.onSurface;
   const outline = theme.colors.outline || onSurface;
+
+  if(getProfileLoading){
+    return(<EditProfileSkeleton/>)
+  }
 
   return (
     <View style={styles.container}>

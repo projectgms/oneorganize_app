@@ -62,7 +62,7 @@ import { AuthProvider } from "./src/context/AuthContext";
 import { AppDataProvider } from "./src/context/AppDataContext";
 import { store } from "./src/store";
 import Toast from 'react-native-toast-message';
-import { registerTranslation, enGB } from "react-native-paper-dates";
+// import { registerTranslation, enGB } from "react-native-paper-dates";
 
 
 import { ThemeModeProvider, useThemeMode } from "./src/context/ThemeModeContext";
@@ -94,7 +94,7 @@ function AppShell() {
 
 export default function App() {
 
-  registerTranslation("enGB", enGB);
+  // registerTranslation("enGB", enGB);
 
   return (
     <Provider store={store}>

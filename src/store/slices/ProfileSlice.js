@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   profileLoading: false,
+  getProfileLoading: false,
   data: null,
   error: null,
 };
@@ -11,14 +12,14 @@ const profileSlice = createSlice({
   initialState,
   reducers: {
     getProfileReq: (state, action) => {
-      state.profileLoading = true;
+      state.getProfileLoading = true;
     },
     getProfileSucc: (state, action) => {
-      state.profileLoading = false;
+      state.getProfileLoading = false;
       state.data = action.payload;
     },
     getProfileFail: (state, action) => {
-      state.profileLoading = false;
+      state.getProfileLoading = false;
       state.error = action.payload;
     },
 
