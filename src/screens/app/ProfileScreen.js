@@ -11,13 +11,21 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-import { updateProfileReq } from "./../../store/slices/ProfileSlice";
+import {
+  updateProfileReq,
+  getProfileReq,
+} from "./../../store/slices/ProfileSlice";
 import Toast from "react-native-toast-message";
+import { useFocusEffect } from "@react-navigation/native";
+import { EditProfileSkeleton } from './components/ProfileScreen/EditProfileSkeleton';
+
 
 export default function EditProfileScreen({ navigation }) {
   const profileData = useSelector((s) => s.profile.data);
 
   const profileDataLoading = useSelector((s) => s.profile.profileLoading);
+
+  const getProfileLoading = useSelector((s) => s.profile.getProfileLoading);
 
   const [name, setName] = useState(profileData?.name || "Name");
   const [photoUri, setPhotoUri] = useState(profileData?.profile_picture);
@@ -26,6 +34,12 @@ export default function EditProfileScreen({ navigation }) {
   const user = useSelector((s) => s.auth.user);
 
   const dispatch = useDispatch();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      dispatch(getProfileReq());
+    }, [dispatch]),
+  );
 
   const theme = useTheme();
 
@@ -36,16 +50,10 @@ export default function EditProfileScreen({ navigation }) {
 
   const pickImage = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (perm.status !== "granted") {
-      Alert.alert(
-        "Permission needed",
-        "Please allow photo access to upload an image.",
-      );
-      return;
-    }
+    if (perm.status !== "granted") return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      // mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -54,14 +62,20 @@ export default function EditProfileScreen({ navigation }) {
     if (result.canceled) return;
 
     const asset = result.assets[0];
+
     const uri = asset.uri;
+    const name = asset.fileName || `profile_${Date.now()}.jpg`; // safe fallback
 
-    // best-effort file metadata for APIs that expect multipart
-    const ext = (uri.split(".").pop() || "jpg").toLowerCase();
-    const type = ext === "png" ? "image/png" : "image/jpeg";
-    const fileName = `profile.${ext}`;
+    // best effort mime type
+    const ext = (name.split(".").pop() || "jpg").toLowerCase();
+    const type =
+      ext === "png"
+        ? "image/png"
+        : ext === "webp"
+          ? "image/webp"
+          : "image/jpeg";
 
-    setPickedImage({ uri, name: fileName, type });
+    setPickedImage({ uri, name, type });
   };
 
   const onSave = async () => {
@@ -76,8 +90,14 @@ export default function EditProfileScreen({ navigation }) {
       form.append("name", name.trim());
       form.append("id", user?.id);
       if (pickedImage?.uri) {
-        form.append("profile_picture", pickedImage.uri);
+        form.append("profile_picture", {
+          uri: pickedImage.uri,
+          name: pickedImage.name || "profile.jpg",
+          type: pickedImage.type || "image/jpeg",
+        });
       }
+
+      // console.log("pickedImage", pickedImage);
 
       // await api.put("/me", form, { headers: { "Content-Type": "multipart/form-data" } });
       // or dispatch(updateProfile({ name: name.trim(), image: pickedImage }))
@@ -96,7 +116,17 @@ export default function EditProfileScreen({ navigation }) {
     }
   };
 
-  const primary = "#0B6B74";
+  // const primary = "#0B6B74";
+
+  const primary = theme.colors.primary; // your theme main color
+  const onPrimary = theme.colors.onPrimary; // text color on primary
+  const surface = theme.colors.surface; // card/button bg
+  const onSurface = theme.colors.onSurface;
+  const outline = theme.colors.outline || onSurface;
+
+  if(getProfileLoading){
+    return(<EditProfileSkeleton/>)
+  }
 
   return (
     <View style={styles.container}>
@@ -158,15 +188,8 @@ export default function EditProfileScreen({ navigation }) {
             loading={profileDataLoading}
             disabled={saving}
             contentStyle={{ height: 54 }}
-            style={[
-              styles.saveBtn,
-              { backgroundColor: theme.colors.background },
-            ]}
-            labelStyle={{
-              fontSize: 16,
-              fontWeight: "700",
-              color: theme.colors.onSurface,
-            }}
+            style={[styles.saveBtn, { backgroundColor: primary }]}
+            labelStyle={{ fontSize: 16, fontWeight: "700", color: onPrimary }}
           >
             Save
           </Button>
@@ -177,16 +200,12 @@ export default function EditProfileScreen({ navigation }) {
             contentStyle={{ height: 54 }}
             style={{
               borderRadius: 14,
-              borderColor: theme.colors.onSurface,
+              borderColor: outline,
               borderWidth: 2,
               marginVertical: 12,
-              backgroundColor: theme.colors.background,
+              backgroundColor: "transparent",
             }}
-            labelStyle={{
-              fontSize: 16,
-              fontWeight: "700",
-              color: theme.colors.onSurface,
-            }}
+            labelStyle={{ fontSize: 16, fontWeight: "700", color: onSurface }}
           >
             Change Password
           </Button>

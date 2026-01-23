@@ -211,16 +211,21 @@ function* handleChangePassword(action) {
   try {
     const res = yield call(api.post, "/auth/change-password", action.payload);
 
-    console.log("change-password payload:", action.payload);
+    // console.log("change-password payload:", action.payload);
     const msg = res?.data?.message || "Password changed";
+    Toast.show({
+      text1: msg,
+      type: "success",
+    });
     yield put(changePasswordSuccess(msg));
-  } catch (err) {
-    const apiMsg = err?.message;
+  } catch (error) {
+    const errData = error?.response?.data;
+    const apiMsg = errData?.message;
     Toast.show({
       text1: apiMsg,
-      type:'error'
+      type: "error",
     });
-    yield put(changePasswordFailure(getErrorMessage(err)));
+    yield put(changePasswordFailure(getErrorMessage(errData)));
   }
 }
 function* handleLogout() {

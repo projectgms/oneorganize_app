@@ -20,6 +20,7 @@ import AppHeader from "../components/AppHeader";
 import { hasAnyPermission } from "../store/selectors/authSelectors";
 import { logoutRequest } from "../store/slices/authSlice";
 import OneOrganizeLogo from "./../../assets/adaptive-icon.png";
+import NotificationScreen from './../screens/app/NotificationScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -120,6 +121,22 @@ export default function AppDrawer() {
           ),
         }}
       />
+
+   <Drawer.Screen
+        name="Notifications"
+        component={NotificationScreen}
+        options={{
+          drawerIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="bell-outline"
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+
+
 
       {canSeeLeave && (
         <Drawer.Screen
