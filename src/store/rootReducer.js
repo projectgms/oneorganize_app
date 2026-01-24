@@ -1,15 +1,22 @@
 import { combineReducers } from "@reduxjs/toolkit";
-import authReducer from "./slices/authSlice";
+import authReducer, { logoutSuccess } from "./slices/authSlice";
 import hrmReducer from "./slices/hrmSlice";
 import profileReducer from "./slices/ProfileSlice";
 import leaveManageReducer from "./slices/leaveManageSlice";
 
-
-const rootReducer = combineReducers({
+const appReducer = combineReducers({
   auth: authReducer,
   hrm: hrmReducer,
-  profile: profileReducer, 
-  leaveManage: leaveManageReducer, 
+  profile: profileReducer,
+  leaveManage: leaveManageReducer,
 });
+
+// ✅ THIS resets ALL slices when logoutSuccess happens
+const rootReducer = (state, action) => {
+  if (action.type === logoutSuccess.type) {
+    state = undefined;
+  }
+  return appReducer(state, action);
+};
 
 export default rootReducer;

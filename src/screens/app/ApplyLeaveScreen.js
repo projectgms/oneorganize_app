@@ -1,6 +1,22 @@
-import React, { useState, useMemo } from "react";
-import { ScrollView, View, StyleSheet, TouchableOpacity } from "react-native";
-import { Button, Card, HelperText, Text, TextInput, useTheme, IconButton } from "react-native-paper";
+import React, { useMemo, useState } from "react";
+import {
+  ScrollView,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
+import {
+  Button,
+  Card,
+  HelperText,
+  Text,
+  TextInput,
+  useTheme,
+  IconButton,
+  Portal,
+  Modal,
+} from "react-native-paper";
 import { Dropdown } from "react-native-element-dropdown";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -21,7 +37,7 @@ export default function ApplyLeaveScreen({ navigation }) {
   const theme = useTheme();
   const dispatch = useDispatch();
   const { loading } = useSelector((s) => s.leaveManage);
-  const user = useSelector((s) => s.auth.user);
+  const { user } = useSelector((s) => s.hrm);
 
   const { addLeave } = useAppData();
 
@@ -30,8 +46,16 @@ export default function ApplyLeaveScreen({ navigation }) {
   const [endDate, setEndDate] = useState(null); // Date | null
   const [reason, setReason] = useState("");
 
+  // Android picker flags
   const [openStart, setOpenStart] = useState(false);
   const [openEnd, setOpenEnd] = useState(false);
+
+  // ✅ iOS picker state (modal + temp selection)
+  const [iosPicker, setIosPicker] = useState({
+    visible: false,
+    field: "start", // "start" | "end"
+    tempDate: new Date(),
+  });
 
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
@@ -75,7 +99,8 @@ export default function ApplyLeaveScreen({ navigation }) {
         })
       );
 
-      setDuration(null);
+      // reset form
+      setDuration("multiple");
       setStartDate(null);
       setEndDate(null);
       setReason("");
@@ -86,6 +111,39 @@ export default function ApplyLeaveScreen({ navigation }) {
 
   const fieldBg = theme.dark ? "#1f2937" : "#ffffff";
   const border = theme.dark ? "#334155" : "#e5e7eb";
+
+  // ✅ open picker helper
+  const openPicker = (field) => {
+    const current =
+      field === "start"
+        ? startDate || new Date()
+        : endDate || startDate || new Date();
+
+    if (Platform.OS === "ios") {
+      setIosPicker({
+        visible: true,
+        field,
+        tempDate: current,
+      });
+    } else {
+      field === "start" ? setOpenStart(true) : setOpenEnd(true);
+    }
+  };
+
+  // ✅ iOS apply selected temp date
+  const applyIosDate = () => {
+    const picked = iosPicker.tempDate;
+
+    if (iosPicker.field === "start") {
+      setStartDate(picked);
+      // optional: if endDate is earlier than startDate, clear it
+      if (endDate && picked > endDate) setEndDate(null);
+    } else {
+      setEndDate(picked);
+    }
+
+    setIosPicker((p) => ({ ...p, visible: false }));
+  };
 
   return (
     <ScrollView
@@ -109,9 +167,8 @@ export default function ApplyLeaveScreen({ navigation }) {
 
       <Card style={[styles.card, { backgroundColor: theme.colors.background }]}>
         <Card.Content>
-          {/* Row: Duration + Start Date */}
+          {/* Duration */}
           <View style={[styles.row, { marginVertical: 12 }]}>
-            {/* Duration dropdown */}
             <View style={{ flex: 1 }}>
               <Text style={[styles.label, { color: theme.colors.onSurface }]}>
                 Duration
@@ -161,6 +218,7 @@ export default function ApplyLeaveScreen({ navigation }) {
             </View>
           </View>
 
+          {/* Dates */}
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.label, { color: theme.colors.onSurface }]}>
@@ -169,7 +227,7 @@ export default function ApplyLeaveScreen({ navigation }) {
 
               <TouchableOpacity
                 activeOpacity={0.85}
-                onPress={() => setOpenStart(true)}
+                onPress={() => openPicker("start")}
                 style={[
                   styles.dateBox,
                   { backgroundColor: fieldBg, borderColor: border },
@@ -190,6 +248,7 @@ export default function ApplyLeaveScreen({ navigation }) {
                 />
               </TouchableOpacity>
             </View>
+
             <View style={{ width: 12 }} />
 
             {isMultiple && (
@@ -200,7 +259,7 @@ export default function ApplyLeaveScreen({ navigation }) {
 
                 <TouchableOpacity
                   activeOpacity={0.85}
-                  onPress={() => setOpenEnd(true)}
+                  onPress={() => openPicker("end")}
                   style={[
                     styles.dateBox,
                     { backgroundColor: fieldBg, borderColor: border },
@@ -246,7 +305,7 @@ export default function ApplyLeaveScreen({ navigation }) {
             {err}
           </HelperText>
 
-          {/* Footer buttons */}
+          {/* Footer */}
           <View style={styles.footer}>
             <Button
               mode="outlined"
@@ -273,39 +332,78 @@ export default function ApplyLeaveScreen({ navigation }) {
         </Card.Content>
       </Card>
 
-      {/* Start date modal */}
-      {openStart && (
+      {/* ✅ ANDROID: close on select/dismiss */}
+      {Platform.OS !== "ios" && openStart && (
         <DateTimePicker
           value={startDate || new Date()}
           mode="date"
           display="default"
           onChange={(event, selectedDate) => {
             setOpenStart(false);
-            if (selectedDate) setStartDate(selectedDate);
+            if (event?.type === "set" && selectedDate) setStartDate(selectedDate);
           }}
         />
       )}
 
-      {/* End date modal */}
-      {openEnd && (
+      {Platform.OS !== "ios" && openEnd && (
         <DateTimePicker
           value={endDate || startDate || new Date()}
           mode="date"
           display="default"
           onChange={(event, selectedDate) => {
             setOpenEnd(false);
-            if (selectedDate) setEndDate(selectedDate);
+            if (event?.type === "set" && selectedDate) setEndDate(selectedDate);
           }}
         />
+      )}
+
+      {/* ✅ iOS: Modal + Done/Cancel (doesn't auto-close while scrolling) */}
+      {Platform.OS === "ios" && (
+        <Portal>
+          <Modal
+            visible={iosPicker.visible}
+            onDismiss={() => setIosPicker((p) => ({ ...p, visible: false }))}
+            contentContainerStyle={[
+              styles.iosModal,
+              { backgroundColor: theme.colors.background, borderColor: border },
+            ]}
+          >
+            <Text style={[styles.iosTitle, { color: theme.colors.onSurface }]}>
+              {iosPicker.field === "start" ? "Select Start Date" : "Select End Date"}
+            </Text>
+
+            <DateTimePicker
+              value={iosPicker.tempDate}
+              mode="date"
+              display="spinner" // or "compact"
+              themeVariant={theme.dark ? "dark" : "light"}
+              onChange={(event, selectedDate) => {
+                // iOS fires continuously; keep it open and just store temp value
+                if (selectedDate) {
+                  setIosPicker((p) => ({ ...p, tempDate: selectedDate }));
+                }
+              }}
+            />
+
+            <View style={styles.iosFooter}>
+              <Button onPress={() => setIosPicker((p) => ({ ...p, visible: false }))}>
+                Cancel
+              </Button>
+              <Button mode="contained" onPress={applyIosDate}>
+                Done
+              </Button>
+            </View>
+          </Modal>
+        </Portal>
       )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  title: { fontSize: 18, fontWeight: "800", marginBottom: 10 },
+  container: { flexGrow: 1, paddingBottom: 18 },
   card: { borderRadius: 14, elevation: 0, marginHorizontal: 18 },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -345,6 +443,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     marginTop: 14,
-    gap: 10, // if your RN doesn't support gap, replace with marginLeft on second button
+    gap: 10,
+  },
+
+  iosModal: {
+    marginHorizontal: 18,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+  },
+  iosTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  iosFooter: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: 10,
   },
 });

@@ -8,28 +8,26 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AppHeader({ navigation }) {
   const theme = useTheme();
-  const insets = useSafeAreaInsets(); // ✅ auto top padding for iOS + Android
+  const insets = useSafeAreaInsets();
 
+  // ✅ ONLY ME API DATA (auth.user)
   const user = useSelector((s) => s.auth.user);
   const brandPrimary =
     useSelector((s) => s.auth.brandSettings?.primary_color) || "#1677ff";
-  const unreadCount = useSelector((s) => s.notifications?.unreadCount || 0);
 
   const annoucements = useSelector((s) => s.hrm.annoucements);
 
-  const profileData = useSelector((s) => s.profile.data);
-
-  // console.log("profileData", profileData);
-
-  const name = user?.name || "User";
+  const displayName = user?.name || "User";
   const roleText = user?.designation || "Employee";
 
-  const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
-  const pic = profileData?.profile_picture;
+  // ✅ use user picture if exists (adjust key name if your backend uses different)
+  const pic = user?.profile_picture || user?.avatar || user?.photo_url || null;
   const source = typeof pic === "string" ? { uri: pic } : pic;
 
+  const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
+
   const currentRouteName = useNavigationState(
-    (state) => state.routes[state.index]?.name,
+    (state) => state.routes[state.index]?.name
   );
   const isActive = currentRouteName === "Notifications";
 
@@ -38,7 +36,7 @@ export default function AppHeader({ navigation }) {
       style={[
         styles.wrapper,
         {
-          paddingTop: insets.top, // ✅ automatic
+          paddingTop: insets.top,
           backgroundColor: theme.colors.surface,
           borderBottomColor: theme.colors.outlineVariant,
         },
@@ -67,7 +65,7 @@ export default function AppHeader({ navigation }) {
           ) : (
             <Avatar.Text
               size={38}
-              label={(profileData?.name[0] || "U").toUpperCase()}
+              label={(displayName?.[0] || "U").toUpperCase()}
               style={{ backgroundColor: brandPrimary }}
             />
           )}
@@ -77,8 +75,9 @@ export default function AppHeader({ navigation }) {
               style={[styles.name, { color: theme.colors.onSurface }]}
               numberOfLines={1}
             >
-              {profileData?.name}
+              {displayName}
             </Text>
+
             <Text
               style={[styles.sub, { color: theme.colors.onSurfaceVariant }]}
               numberOfLines={1}
@@ -142,7 +141,7 @@ const styles = StyleSheet.create({
     }),
   },
   container: {
-    height: 56, // header content height (safe area is added above)
+    height: 56,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,

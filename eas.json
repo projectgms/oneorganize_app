@@ -8,10 +8,15 @@
       "developmentClient": true,
       "distribution": "internal"
     },
-    "preview": {
+      "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://tico.getmysolutions.in/api/v1",
+        "EXPO_PUBLIC_TENANT": "tico",
+        "EXPO_PUBLIC_GANTT_URL": "http://192.168.0.140:5173"
       }
     },
     "production": {
