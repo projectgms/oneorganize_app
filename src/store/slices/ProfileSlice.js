@@ -14,7 +14,7 @@ const profileSlice = createSlice({
     getProfileReq: (state, action) => {
       state.getProfileLoading = true;
     },
-    getProfileSucc: (state, action) => {
+     getProfileSucc: (state, action) => {
       state.getProfileLoading = false;
       state.data = action.payload;
     },
@@ -22,6 +22,12 @@ const profileSlice = createSlice({
       state.getProfileLoading = false;
       state.error = action.payload;
     },
+   resetProfileState: (state) => {
+  state.profileLoading = false;
+  state.getProfileLoading = false;
+  state.data = null;
+  state.error = null;
+},
 
     updateProfileReq: (state, action) => {
       state.profileLoading = true;
@@ -41,6 +47,7 @@ export const {
   getProfileReq,
   getProfileSucc,
   updateProfileFail,
+  resetProfileState,    
   updateProfileReq,
   updateProfileSucc,
 } = profileSlice.actions;

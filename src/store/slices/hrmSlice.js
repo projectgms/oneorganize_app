@@ -9,6 +9,7 @@ const initialState = {
   annoucements: null,
   joiningAnniversary: null,
   todaysLeave: null,
+  user: null,
 };
 
 const hrmSlice = createSlice({
@@ -27,6 +28,7 @@ const hrmSlice = createSlice({
       state.annoucements = action.payload?.announcements;
       state.joiningAnniversary = action.payload?.joining_date;
       state.todaysLeave = action.payload?.todays_leave;
+      state.user= action.payload?.emp;
     },
     fetchHrmOverviewFailure: (state, action) => {
       state.loading = false;

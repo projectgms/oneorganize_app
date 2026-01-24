@@ -1,6 +1,8 @@
-import { call, put, takeLatest } from "redux-saga/effects";
-import api from "../../laravelApiClient"; // adjust if your path differs
+import { call, put, takeLatest, select } from "redux-saga/effects";
+import api from "../../laravelApiClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
+
 import {
   loginRequest,
   loginSuccess,
@@ -17,8 +19,20 @@ import {
   logoutRequest,
   logoutSuccess,
   logoutFailure,
+
+  // ✅ ADD these in authSlice exports (snippet below)
+  meRequest,
+  meSuccess,
+  meFailure,
 } from "../slices/authSlice";
-import Toast from "react-native-toast-message";
+
+import {
+  // ✅ make sure ProfileSlice exports this (snippet below)
+  resetProfileState,
+  getProfileReq,
+} from "../slices/ProfileSlice";
+
+import { fetchHrmOverviewRequest } from "../slices/hrmSlice";
 
 // helper to extract backend error message safely
 const getErrorMessage = (err) =>
@@ -38,39 +52,45 @@ const safeRemoveMany = async (keys = []) => {
     await AsyncStorage.multiRemove(keys);
   } catch (e) {}
 };
-const extractLoginData = (res) => {
-  // supports: {data:{token,user}} OR {token,user} OR {data:{access_token,user}} etc.
-  const raw = res?.data;
-  const d1 = raw?.data ?? raw;
-  const d2 = d1?.data ?? d1;
 
-  const token =
-    d2?.token ||
-    d2?.access_token ||
-    d1?.token ||
-    d1?.access_token ||
-    raw?.token ||
-    raw?.access_token;
+const selectToken = (s) => s.auth.token;
 
-  const user = d2?.user || d1?.user || raw?.user;
+// ✅ ME API (refresh logged-in user)
+function* handleMe() {
+  const tokenAtStart = yield select(selectToken);
+  if (!tokenAtStart) return;
 
-  return { token, user };
-};
+  try {
+    const res = yield call(api.get, "/auth/me");
+
+    // ✅ stale guard
+    const tokenNow = yield select(selectToken);
+    if (!tokenNow || tokenNow !== tokenAtStart) return;
+
+    const payload = res?.data?.data || res?.data;
+
+    const user = payload?.user || null;
+    const roles = user?.roles || payload?.roles || [];
+    const permissions = user?.permissions || payload?.permissions || [];
+    const brandSettings = payload?.brand_settings || payload?.brandSettings || null;
+
+    // persist latest (optional but good)
+    yield call(safeSet, "auth_user", JSON.stringify(user || null));
+    yield call(safeSet, "auth_permissions", JSON.stringify(permissions || []));
+    yield call(safeSet, "auth_brand_settings", JSON.stringify(brandSettings || null));
+
+    yield put(meSuccess({ user, roles, permissions, brandSettings }));
+  } catch (err) {
+    yield put(meFailure(getErrorMessage(err)));
+  }
+}
 
 // LOGIN
-// function* handleLogin(action) {
-//   try {
-//     // action.payload: { email, password } (or your backend fields)
-//     const res = yield call(api.post, "/auth/login", action.payload);
-//     // Expecting: { token, user } OR { data: { token, user } }
-//     const data = res?.data?.data || res?.data;
-//     yield put(loginSuccess({ token: data?.token, user: data?.user }));
-//   } catch (err) {
-//     yield put(loginFailure(getErrorMessage(err)));
-//   }
-// }
 function* handleLogin(action) {
   try {
+    // ✅ clear old profile instantly (prevents old header)
+    yield put(resetProfileState());
+
     const { email, password, tenant } = action.payload || {};
     const finalTenant = tenant || process.env.EXPO_PUBLIC_TENANT;
 
@@ -100,11 +120,7 @@ function* handleLogin(action) {
     yield call(safeSet, "auth_token_type", String(tokenType));
     yield call(safeSet, "auth_user", JSON.stringify(user || null));
     yield call(safeSet, "auth_permissions", JSON.stringify(permissions || []));
-    yield call(
-      safeSet,
-      "auth_brand_settings",
-      JSON.stringify(brandSettings || null),
-    );
+    yield call(safeSet, "auth_brand_settings", JSON.stringify(brandSettings || null));
 
     yield put(
       loginSuccess({
@@ -116,12 +132,18 @@ function* handleLogin(action) {
         roles,
         permissions,
         brandSettings,
-      }),
+      })
     );
+
+    // ✅ IMPORTANT: refresh after login
+    yield put(meRequest());
+    yield put(getProfileReq());
+    yield put(fetchHrmOverviewRequest());
   } catch (err) {
     yield put(loginFailure(getErrorMessage(err)));
   }
 }
+
 // FORGOT
 function* handleForgotPassword(action) {
   try {
@@ -135,7 +157,6 @@ function* handleForgotPassword(action) {
 
     const res = yield call(api.post, "/auth/forgot-password", { email });
 
-    // ✅ try to read token from response (adjust paths if needed)
     const token =
       res?.data?.data?.token ||
       res?.data?.token ||
@@ -148,13 +169,12 @@ function* handleForgotPassword(action) {
       res?.data?.data?.message ||
       "Reset instructions sent";
 
-    // ✅ store token in redux so screen can navigate with it
     yield put(
       forgotPasswordSuccess({
         message: msg,
         email,
         token,
-      }),
+      })
     );
   } catch (err) {
     yield put(forgotPasswordFailure(getErrorMessage(err)));
@@ -169,12 +189,10 @@ function* handleResetPassword(action) {
     const email = payload.email;
     const token = payload.token;
 
-    // IMPORTANT: backend expects these keys
-    const password = payload.password || payload.newPassword; // allow UI to pass newPassword too
+    const password = payload.password || payload.newPassword;
     const confirmpassword =
       payload.confirmpassword || payload.confirm || payload.confirmPassword;
 
-    // tenant for pre-login requests
     const tenant = payload?.tenant || process.env.EXPO_PUBLIC_TENANT;
     if (tenant) yield call(safeSet, "tenant", String(tenant));
 
@@ -182,7 +200,6 @@ function* handleResetPassword(action) {
       throw new Error("email, token, password, confirmpassword are required");
     }
 
-    // ✅ matches Postman exactly
     const res = yield call(api.post, "/auth/reset-password", {
       email,
       token,
@@ -195,12 +212,7 @@ function* handleResetPassword(action) {
       res?.data?.data?.message ||
       "Password reset successful";
 
-    yield put(
-      resetPasswordSuccess({
-        message: msg,
-        email,
-      }),
-    );
+    yield put(resetPasswordSuccess({ message: msg, email }));
   } catch (err) {
     yield put(resetPasswordFailure(getErrorMessage(err)));
   }
@@ -210,24 +222,18 @@ function* handleResetPassword(action) {
 function* handleChangePassword(action) {
   try {
     const res = yield call(api.post, "/auth/change-password", action.payload);
-
-    // console.log("change-password payload:", action.payload);
     const msg = res?.data?.message || "Password changed";
-    Toast.show({
-      text1: msg,
-      type: "success",
-    });
+
+    Toast.show({ text1: msg, type: "success" });
     yield put(changePasswordSuccess(msg));
   } catch (error) {
     const errData = error?.response?.data;
-    const apiMsg = errData?.message;
-    Toast.show({
-      text1: apiMsg,
-      type: "error",
-    });
-    yield put(changePasswordFailure(getErrorMessage(errData)));
+    Toast.show({ text1: errData?.message, type: "error" });
+    yield put(changePasswordFailure(getErrorMessage(error)));
   }
 }
+
+// LOGOUT
 function* handleLogout() {
   const keysToClear = [
     "auth_token",
@@ -235,27 +241,28 @@ function* handleLogout() {
     "auth_user",
     "auth_permissions",
     "auth_brand_settings",
-    // "tenant", // optional
+    "tenant", // ✅ clear tenant (multi-tenant safety)
   ];
 
   try {
-    // backend logout (Authorization + X-Tenant will be added by interceptor)
     yield call(api.post, "/auth/logout");
-
-    // clear local storage
-    yield call(safeRemoveMany, keysToClear);
-
-    yield put(logoutSuccess());
-  } catch (err) {
-    // even if API fails, still clear local session
-    yield call(safeRemoveMany, keysToClear);
-
-    yield put(logoutFailure(getErrorMessage(err)));
-    yield put(logoutSuccess()); // force UI logout
+  } catch (e) {
+    // ignore API failure
   }
+
+  // ✅ clear local storage always
+  yield call(safeRemoveMany, keysToClear);
+
+  // ✅ clear old profile in redux
+  yield put(resetProfileState());
+
+  // ✅ auth slice clears auth state
+  yield put(logoutSuccess());
 }
+
 export default function* authSaga() {
   yield takeLatest(loginRequest.type, handleLogin);
+  yield takeLatest(meRequest.type, handleMe);
   yield takeLatest(forgotPasswordRequest.type, handleForgotPassword);
   yield takeLatest(resetPasswordRequest.type, handleResetPassword);
   yield takeLatest(changePasswordRequest.type, handleChangePassword);

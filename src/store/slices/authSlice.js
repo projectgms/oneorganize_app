@@ -13,6 +13,9 @@ const initialState = {
 
   brandSettings: null,
 
+  meLoading: false,
+meError: null,
+
     resetLoading: false,
   resetError: null,
   resetMessage: null,
@@ -80,6 +83,23 @@ clearForgotPasswordState: (state) => {
   state.forgotMessage = null;
   state.forgotEmail = null;
   state.forgotToken = null;
+},
+
+
+meRequest: (state) => {
+  state.meLoading = true;
+  state.meError = null;
+},
+meSuccess: (state, action) => {
+  state.meLoading = false;
+  state.user = action.payload?.user || null;
+  state.roles = action.payload?.roles || [];
+  state.permissions = action.payload?.permissions || [];
+  state.brandSettings = action.payload?.brandSettings || null;
+},
+meFailure: (state, action) => {
+  state.meLoading = false;
+  state.meError = action.payload;
 },
 
     // RESET
@@ -170,7 +190,9 @@ export const {
   changePasswordRequest,
   changePasswordSuccess,
   changePasswordFailure,
-  
+  meRequest,
+  meSuccess,
+  meFailure,
  logoutRequest,
   logoutSuccess,
   logoutFailure,
