@@ -4,11 +4,12 @@ import {
   createDrawerNavigator,
   DrawerContentScrollView,
   DrawerItemList,
+  DrawerItem, // ✅ ADD
 } from "@react-navigation/drawer";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useTheme } from "react-native-paper";
-import { useSafeAreaInsets } from "react-native-safe-area-context"; // ✅ ADD
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import MainTabs from "./MainTabs";
 import ProfileScreen from "../screens/app/ProfileScreen";
@@ -16,47 +17,77 @@ import LeaveManagementScreen from "../screens/app/LeaveManagementScreen";
 import ChangePasswordScreen from "../screens/auth/ChangePasswordScreen";
 import AppearanceScreen from "../screens/app/AppearanceScreen";
 import AppHeader from "../components/AppHeader";
+import NotificationScreen from "../screens/app/NotificationScreen";
 
 import { hasAnyPermission } from "../store/selectors/authSelectors";
 import { logoutRequest } from "../store/slices/authSlice";
 import OneOrganizeLogo from "./../../assets/adaptive-icon.png";
-import NotificationScreen from './../screens/app/NotificationScreen';
 
 const Drawer = createDrawerNavigator();
 
-function CustomDrawerContent(props) {
+function CustomDrawerContent({ onLogout, ...props }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
-    <DrawerContentScrollView
-      {...props}
-      contentContainerStyle={{
-        paddingTop: insets.top + 8, // ✅ FIX notch/camera overlap
-        paddingBottom: insets.bottom + 8,
-      }}
-    >
-      <View
-        style={{
-          paddingVertical: 10,
-          marginHorizontal: 12,
-          marginBottom: 12,
-          borderRadius: 12,
-          alignItems: "center",
-          borderWidth: 1,
-          borderColor: theme.colors.outlineVariant,
-          backgroundColor: theme.colors.surface, // ✅ works in dark mode
+    <View style={{ flex: 1, backgroundColor: theme.colors.surface }}>
+      {/* ✅ Scrollable area (logo + items) */}
+      <DrawerContentScrollView
+        {...props}
+        contentContainerStyle={{
+          paddingTop: insets.top + 8,
+          paddingBottom: 8,
         }}
       >
-        <Image
-          source={OneOrganizeLogo}
-          style={{ width: 120, height: 60 }}
-          resizeMode="contain"
+        <View
+          style={{
+            paddingVertical: 10,
+            marginHorizontal: 12,
+            marginBottom: 12,
+            borderRadius: 12,
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: theme.colors.outlineVariant,
+            backgroundColor: theme.colors.surface,
+          }}
+        >
+          <Image
+            source={OneOrganizeLogo}
+            style={{ width: 120, height: 60 }}
+            resizeMode="contain"
+          />
+        </View>
+
+        <DrawerItemList {...props} />
+      </DrawerContentScrollView>
+
+      {/* ✅ Fixed bottom Logout */}
+      <View
+        style={{
+          paddingHorizontal: 12,
+          paddingBottom: insets.bottom + 8,
+          paddingTop: 8,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.outlineVariant,
+        }}
+      >
+        <DrawerItem
+          label="Logout"
+          inactiveTintColor={theme.colors.onSurfaceVariant}
+          icon={({ size }) => (
+            <MaterialCommunityIcons
+              name="logout"
+              size={size}
+              color={theme.colors.onSurfaceVariant}
+            />
+          )}
+          onPress={() => {
+            props.navigation.closeDrawer();
+            onLogout();
+          }}
         />
       </View>
-
-      <DrawerItemList {...props} />
-    </DrawerContentScrollView>
+    </View>
   );
 }
 
@@ -66,7 +97,8 @@ export default function AppDrawer() {
 
   const permissions = useSelector((s) => s.auth.permissions || []);
   const brandPrimary =
-    useSelector((s) => s.auth.brandSettings?.primary_color) || theme.colors.primary;
+    useSelector((s) => s.auth.brandSettings?.primary_color) ||
+    theme.colors.primary;
 
   const canSeeLeave = hasAnyPermission(permissions, [
     "show leave",
@@ -95,7 +127,9 @@ export default function AppDrawer() {
         drawerStyle: { backgroundColor: theme.colors.surface },
         sceneContainerStyle: { backgroundColor: theme.colors.background },
       }}
-      drawerContent={(props) => <CustomDrawerContent {...props} />} // ✅ USE THIS
+      drawerContent={(props) => (
+        <CustomDrawerContent {...props} onLogout={onLogout} />
+      )}
     >
       <Drawer.Screen
         name="Home"
@@ -103,9 +137,20 @@ export default function AppDrawer() {
         options={{
           title: "Dashboard",
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home-outline" color={color} size={size} />
+            <MaterialCommunityIcons
+              name="home-outline"
+              color={color}
+              size={size}
+            />
           ),
         }}
+        listeners={({ navigation }) => ({
+          drawerItemPress: (e) => {
+            e.preventDefault();
+            navigation.closeDrawer();
+            navigation.navigate("Home", { screen: "Dashboard" });
+          },
+        })}
       />
 
       <Drawer.Screen
@@ -122,21 +167,15 @@ export default function AppDrawer() {
         }}
       />
 
-   <Drawer.Screen
+      <Drawer.Screen
         name="Notifications"
         component={NotificationScreen}
         options={{
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="bell-outline"
-              color={color}
-              size={size}
-            />
+            <MaterialCommunityIcons name="bell-outline" color={color} size={size} />
           ),
         }}
       />
-
-
 
       {canSeeLeave && (
         <Drawer.Screen
@@ -172,24 +211,12 @@ export default function AppDrawer() {
         options={{
           title: "Appearance",
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="theme-light-dark" color={color} size={size} />
+            <MaterialCommunityIcons
+              name="theme-light-dark"
+              color={color}
+              size={size}
+            />
           ),
-        }}
-      />
-
-      <Drawer.Screen
-        name="Logout"
-        component={MainTabs}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="logout" color={color} size={size} />
-          ),
-        }}
-        listeners={{
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            onLogout();
-          },
         }}
       />
     </Drawer.Navigator>

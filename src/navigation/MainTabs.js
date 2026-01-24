@@ -17,6 +17,8 @@ export default function MainTabs() {
 
   return (
     <Tab.Navigator
+    initialRouteName="Dashboard"
+
       screenOptions={{
         headerShown: false,
         tabBarHideOnKeyboard: true,

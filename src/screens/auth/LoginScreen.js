@@ -8,6 +8,9 @@ import {
   Image,
   Animated,
   Easing,
+    ScrollView,               // ✅ ADD
+  Keyboard,                 // ✅ ADD
+  TouchableWithoutFeedback,
   InteractionManager,
 } from "react-native";
 import { Button, HelperText, TextInput, Text, Card, Checkbox } from "react-native-paper";
@@ -106,8 +109,16 @@ export default function LoginScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
       style={[styles.root, { backgroundColor: COLORS.screenBg }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"} // ✅ ANDROID FIX
+      keyboardVerticalOffset={0}
+
     >
+
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
       {/* TOP */}
       <View style={styles.top}>
         <Image
@@ -225,6 +236,8 @@ export default function LoginScreen({ navigation }) {
           </Card>
         </Animated.View>
       </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
