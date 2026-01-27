@@ -1,94 +1,178 @@
-import React, { useMemo } from "react";
-import { View, StyleSheet, FlatList } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { View, StyleSheet, FlatList, Image } from "react-native";
 import { Card, Text, useTheme } from "react-native-paper";
-import { useFocusEffect } from '@react-navigation/native';
-import {getLeaveDetailsReq} from './../../store/slices/leaveManageSlice';
-import { useDispatch } from 'react-redux';
+import { Dropdown } from "react-native-element-dropdown";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useDispatch, useSelector } from "react-redux";
+import { getLeaveDetailsReq } from "./../../store/slices/leaveManageSlice";
 
 const LeaveStatusScreen = () => {
   const theme = useTheme();
-
   const dispatch = useDispatch();
 
+  // ✅ FIX: you forgot to import useSelector in your code
+  const { leaveDetailList } = useSelector((s) => s.leaveManage);
 
+  const loading = useSelector((s) => s.leaveManage.loading?.listLoading);
 
-  // ✅ replace with redux / api data later
-  const loading = false;
+  // ✅ dropdown styling same as ApplyLeaveScreen
+  const border = theme.dark ? "#334155" : "#e5e7eb";
 
-  const leaves = useMemo(
-    () => [
-      {
-        id: 76,
-        employee_id: 24,
-        leave_date: "2026-01-23",
-        leave_type: "Unpaid",
-        status: "Pending",
-        applied_on: "2026-01-23",
-        leave_reason: "D d c c c c c c c c",
-        duration: "full_day",
-        employee_name: "Pradum Shinde",
-      },
-      {
-        id: 72,
-        employee_id: 24,
-        leave_date: "2026-01-13",
-        leave_type: "Unpaid",
-        status: "Pending",
-        applied_on: "2026-01-23",
-        leave_reason: "Nothing",
-        duration: "full_day",
-        employee_name: "Pradum Shinde",
-      },
-    ],
-    []
-  );
+  // ✅ Year dropdown state
+  const [selectedYear, setSelectedYear] = useState(null);
 
-  if (loading) {
-    return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        {Array.from({ length: 2 }).map((_, i) => (
-          <LeaveCardSkeleton key={i} />
-        ))}
-      </View>
-    );
-  }
+  // ✅ Year options (last 8 years + next 2 years)
+  const yearOptions = useMemo(() => {
+    const years = new Set();
+
+    // include current year range
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 8;
+    const endYear = currentYear + 2;
+
+    for (let y = startYear; y <= endYear; y++) {
+      years.add(String(y));
+    }
+
+    return Array.from(years)
+      .sort((a, b) => Number(b) - Number(a))
+      .map((y) => ({ label: y, value: y }));
+  }, []);
+
+  // ✅ DISPATCH API when year selected
+  useEffect(() => {
+    if (!selectedYear) return;
+    dispatch(getLeaveDetailsReq({ year: selectedYear })); // ✅ payload with selected year
+  }, [selectedYear]);
+
+  // ✅ Redux data
+  const leavesFromStore = Array.isArray(leaveDetailList) ? leaveDetailList : [];
+
+  // ✅ If API already returns year-filtered list, you can skip this filter.
+  const displayLeaves = useMemo(() => {
+    if (!selectedYear) return [];
+    return leavesFromStore.filter((l) => getYear(l?.leave_date) === String(selectedYear));
+  }, [leavesFromStore, selectedYear]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <FlatList
-        data={leaves}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => <LeaveCard leave={item} />}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-        contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
-        ListEmptyComponent={
-          <Card style={[styles.emptyCard, { backgroundColor: theme.colors.surface }]} mode="contained">
-            <Card.Content style={{ alignItems: "center", paddingVertical: 18 }}>
-              <Text style={{ color: theme.colors.onSurface, fontWeight: "700" }}>
-                No Leave Requests
-              </Text>
-              <Text style={{ marginTop: 6, color: theme.colors.onSurface, opacity: 0.75 }}>
-                You don’t have any leave requests yet.
-              </Text>
-            </Card.Content>
-          </Card>
-        }
-      />
+      {/* Dropdown */}
+      <View style={{ padding: 16, paddingBottom: 8 }}>
+        <Text style={{ color: theme.colors.onSurface, fontWeight: "700", marginBottom: 8 }}>
+          Select Year
+        </Text>
+
+        <Dropdown
+          style={[
+            styles.dropdown,
+            {
+              backgroundColor: theme.colors.background,
+              borderColor: border,
+            },
+          ]}
+          containerStyle={[
+            styles.dropdownMenu,
+            {
+              backgroundColor: theme.colors.background,
+              borderColor: border,
+            },
+          ]}
+          placeholderStyle={[styles.placeholder, { color: theme.colors.onSurface }]}
+          selectedTextStyle={[styles.selectedText, { color: theme.colors.onSurface }]}
+          itemTextStyle={{ color: "#5D3FD3" }}
+          data={yearOptions}
+          labelField="label"
+          valueField="value"
+          placeholder="Choose Year"
+          value={selectedYear}
+          onChange={(item) => setSelectedYear(item.value)}
+          renderRightIcon={() => (
+            <MaterialCommunityIcons
+              name="chevron-down"
+              size={22}
+              color={theme.colors.onSurface}
+            />
+          )}
+        />
+      </View>
+
+      {/* Content */}
+      {loading ? (
+        <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <LeaveCardSkeleton key={i} />
+          ))}
+        </View>
+      ) : !selectedYear ? (
+        <EmptyLeavesCard
+          title="No Leaves Available"
+          subtitle="Please select a year to view leave requests."
+          imageSource={require("./../../../assets/empty-box.png")}
+        />
+      ) : displayLeaves.length === 0 ? (
+        <EmptyLeavesCard
+          title="No Leaves Available"
+          subtitle={`No leave requests found for ${selectedYear}.`}
+          imageSource={require("./../../../assets/empty-box.png")}
+        />
+      ) : (
+        <FlatList
+          data={displayLeaves}
+          keyExtractor={(item, index) => String(item?.id ?? index)}
+          renderItem={({ item }) => <LeaveCard leave={item} />}
+          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+          contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+        />
+      )}
     </View>
   );
 };
 
 export default LeaveStatusScreen;
 
-function LeaveCard({ leave }) {
+/** ✅ Empty state card (no border + centered image) */
+function EmptyLeavesCard({ title, subtitle, imageSource }) {
   const theme = useTheme();
 
+  return (
+    <View style={{ padding: 16, paddingTop: 8 }}>
+      <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} mode="contained">
+        <Card.Content style={{ alignItems: "center", paddingVertical: 18 }}>
+          {!!imageSource && (
+            <Image source={imageSource} style={styles.emptyImage} resizeMode="contain" />
+          )}
+          <Text style={{ color: theme.colors.onSurface, fontWeight: "800", fontSize: 16 }}>
+            {title}
+          </Text>
+          {!!subtitle && (
+            <Text
+              style={{
+                marginTop: 6,
+                color: theme.colors.onSurface,
+                opacity: 0.75,
+                textAlign: "center",
+              }}
+            >
+              {subtitle}
+            </Text>
+          )}
+        </Card.Content>
+      </Card>
+    </View>
+  );
+}
+
+/** ✅ Leave Card (excludes id / employee_id / employee_name) */
+function LeaveCard({ leave }) {
+  const theme = useTheme();
   const statusStyles = getStatusStyles(leave?.status);
 
+  const border = theme.dark ? "#334155" : "#e5e7eb";
+
+
   return (
-    <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} mode="contained">
+    <Card style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: border, borderWidth:1, elevation:2 }]} mode="contained">
       <Card.Content>
-        {/* Top Row: Leave Date + Status pill */}
         <View style={styles.rowBetween}>
           <View>
             <Text style={[styles.label, { color: theme.colors.onSurface, opacity: 0.7 }]}>
@@ -108,7 +192,6 @@ function LeaveCard({ leave }) {
 
         <View style={styles.divider} />
 
-        {/* Info rows */}
         <InfoRow label="Type" value={leave?.leave_type} />
         <InfoRow label="Applied On" value={formatDate(leave?.applied_on)} />
         <InfoRow label="Duration" value={formatDuration(leave?.duration)} />
@@ -152,7 +235,7 @@ function LeaveCardSkeleton() {
             <View style={[styles.skelLine, { width: "35%" }]} />
             <View style={[styles.skelLine, { width: "60%", marginTop: 8, height: 14 }]} />
           </View>
-          <View style={[styles.skelPill]} />
+          <View style={styles.skelPill} />
         </View>
 
         <View style={styles.divider} />
@@ -172,6 +255,13 @@ function LeaveCardSkeleton() {
 }
 
 /** Helpers */
+function getYear(input) {
+  if (!input) return null;
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return String(input).slice(0, 4);
+  return String(d.getFullYear());
+}
+
 function formatDate(input) {
   if (!input) return "-";
   const d = new Date(input);
@@ -186,6 +276,9 @@ function formatDuration(v) {
   const s = String(v || "").toLowerCase();
   if (s === "full_day") return "Full Day";
   if (s === "half_day") return "Half Day";
+  if (s === "first_half") return "First Half";
+  if (s === "second_half") return "Second Half";
+  if (s === "2_hours") return "2 Hours Leave";
   return v || "-";
 }
 
@@ -205,17 +298,33 @@ function getStatusStyles(statusRaw) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
 
+  // ✅ No border + no shadow for cards
   card: {
-    borderWidth: 0, // ✅ no border
-    elevation: 0,   // ✅ no shadow
+    borderWidth: 0,
+    elevation: 2,
     borderRadius: 14,
   },
 
-  emptyCard: {
-    borderWidth: 0,
-    elevation: 0,
-    borderRadius: 14,
+  emptyImage: {
+    width: 140,
+    height: 140,
+    marginBottom: 10,
   },
+
+  // ✅ Dropdown styles same as ApplyLeaveScreen
+  dropdown: {
+    height: 48,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    justifyContent: "center",
+  },
+  dropdownMenu: {
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  placeholder: { fontSize: 14, opacity: 0.6 },
+  selectedText: { fontSize: 14, fontWeight: "700" },
 
   rowBetween: {
     flexDirection: "row",
@@ -256,7 +365,7 @@ const styles = StyleSheet.create({
   },
   statusText: { fontSize: 12, fontWeight: "800" },
 
-  // Skeleton shapes
+  // Skeleton
   skelLine: {
     height: 12,
     borderRadius: 8,
