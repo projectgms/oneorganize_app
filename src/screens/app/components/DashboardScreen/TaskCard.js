@@ -20,55 +20,75 @@ import { useTheme } from 'react-native-paper';
  * }
  */
 
-export default function TaskCard({
-  task,
-  onPress,
-  showMeta = true, // show status/progress/hours/assignee row
-}) {
-  const progressText =
-    typeof task?.PROGRESS === "number"
-      ? `${task.PROGRESS}%`
-      : task?.PROGRESS ?? "0%";
-
-  const endDateLabel = formatDate(task?.END_DATE) || task?.END_DATE || "";
-
+export default function TaskCard({ task, onPress, showMeta = true }) {
   const theme = useTheme();
 
-  const priorityStyles = getPriorityPill(task?.PRIORITY);
-  const statusStyles = getStatusPill(task?.STATUS);
+  // ✅ support both UPPERCASE and API snake_case
+  const title = task?.TASK_TITLE ?? task?.title ?? "Untitled task";
+  const description = task?.DESCRIPTION ?? task?.description ?? "";
+  const project =
+    task?.PROJECT ??
+    task?.project?.project_name ??
+    (task?.project_id ? `Project: ${task.project_name}` : "Project");
+
+  const priority = task?.PRIORITY ?? task?.priority ?? "";
+  const status = task?.STATUS ?? task?.status ?? "";
+  const progressVal = task?.PROGRESS ?? task?.progress ?? 0;
+  const estHours = task?.EST_HOURS ?? task?.estimated_hours ?? null;
+  const endDateRaw = task?.END_DATE ?? task?.end_date ?? "";
+  const seq = task?.TASK_SEQ ?? task?.task_seq ?? null;
+
+  const assignee =
+    task?.ASSIGNED_TO ??
+    task?.assigned_users?.[0]?.name ??
+    task?.assigned_users?.[0]?.full_name ??
+    "";
+
+  const progressText =
+    typeof progressVal === "number" ? `${progressVal}%` : String(progressVal ?? "0%");
+
+  const endDateLabel = formatDate(endDateRaw) || endDateRaw || "";
+
+  const priorityStyles = getPriorityPill(priority);
+  const statusStyles = getStatusPill(status);
 
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={({ pressed }) => [styles.card, {backgroundColor: theme.colors.background, borderColor:theme.colors.onSurface}]}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: theme.colors.background,
+          borderColor: theme.colors.onSurface,
+          borderWidth: 0.5,            // ✅ you were setting borderColor but borderWidth was commented
+          opacity: pressed ? 0.85 : 1 // ✅ use pressed feedback
+        },
+      ]}
     >
-      {/* Header */}
       <View style={styles.headerRow}>
-        <Text style={[styles.title, {color:theme.colors.onSurface }]} numberOfLines={2}>
-          {task?.TASK_TITLE || "Untitled task"}
+        <Text style={[styles.title, { color: theme.colors.onSurface }]} numberOfLines={2}>
+          {title}
         </Text>
 
-        {task?.TASK_SEQ ? (
+        {seq ? (
           <View style={styles.seqPill}>
-            <Text style={styles.seqText}>#{task.TASK_SEQ}</Text>
+            <Text style={styles.seqText}>#{seq}</Text>
           </View>
         ) : null}
       </View>
 
-      {/* Description */}
-      {!!task?.DESCRIPTION && (
-        <Text style={[styles.desc, {color: theme.colors.onSurface}]} numberOfLines={2}>
-          {task.DESCRIPTION}
+      {!!description && (
+        <Text style={[styles.desc, { color: theme.colors.onSurface }]} numberOfLines={2}>
+          {description}
         </Text>
       )}
 
-      {/* Project + Date row */}
       <View style={styles.projectRow}>
         <View style={styles.projectLeft}>
           <MaterialCommunityIcons name="file-document-outline" size={16} color="#6B7280" />
-          <Text style={[styles.projectName, {color: theme.colors.onSurface}]} numberOfLines={1}>
-            {task?.PROJECT || "Project"}
+          <Text style={[styles.projectName, { color: theme.colors.onSurface }]} numberOfLines={1}>
+            {project}
           </Text>
         </View>
 
@@ -79,46 +99,40 @@ export default function TaskCard({
         )}
       </View>
 
-      {/* Footer pills */}
       <View style={styles.footer}>
-        {/* Priority */}
         <View style={[styles.pill, priorityStyles.pill]}>
           <Text style={[styles.pillText, priorityStyles.text]}>
-            {task?.PRIORITY ? `${task.PRIORITY} Priority` : "Priority"}
+            {priority ? `${priority} Priority` : "Priority"}
           </Text>
         </View>
 
         {showMeta && (
           <View style={styles.metaRow}>
-            {/* Status */}
-            {!!task?.STATUS && (
+            {!!status && (
               <View style={[styles.smallPill, statusStyles.pill]}>
                 <Text style={[styles.smallPillText, statusStyles.text]} numberOfLines={1}>
-                  {task.STATUS}
+                  {status}
                 </Text>
               </View>
             )}
 
-            {/* Progress */}
             <View style={styles.iconStat}>
               <MaterialCommunityIcons name="progress-check" size={16} color="#6B7280" />
               <Text style={styles.iconStatText}>{progressText}</Text>
             </View>
 
-            {/* Est Hours */}
-            {task?.EST_HOURS !== undefined && task?.EST_HOURS !== null && (
+            {estHours !== null && estHours !== undefined && (
               <View style={styles.iconStat}>
                 <MaterialCommunityIcons name="clock-outline" size={16} color="#6B7280" />
-                <Text style={styles.iconStatText}>{String(task.EST_HOURS)}h</Text>
+                <Text style={styles.iconStatText}>{String(estHours)}h</Text>
               </View>
             )}
 
-            {/* Assignee */}
-            {!!task?.ASSIGNED_TO && (
+            {!!assignee && (
               <View style={styles.iconStat}>
                 <MaterialCommunityIcons name="account-outline" size={16} color="#6B7280" />
                 <Text style={styles.iconStatText} numberOfLines={1}>
-                  {task.ASSIGNED_TO}
+                  {assignee}
                 </Text>
               </View>
             )}
@@ -128,6 +142,7 @@ export default function TaskCard({
     </Pressable>
   );
 }
+
 
 /** Helpers */
 function getPriorityPill(priorityRaw) {
