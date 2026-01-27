@@ -58,7 +58,10 @@ export default function NotificationScreen() {
   const navigation = useNavigation();
 
   // swap MOCK_DATA with your store data:
-  const data = annoucements;
+  // const data = annoucements;
+
+  const data = annoucements || [];
+
 
   const bg = theme.colors.background;
   const cardBg = theme.dark
