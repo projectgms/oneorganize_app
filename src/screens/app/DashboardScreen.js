@@ -49,6 +49,10 @@ export default function DashboardScreen({ navigation }) {
   const theme = useTheme();
 
   const user = useSelector((s) => s.auth.user);
+     const isCompanyAdmin = useMemo(() => {
+  const roles = user?.roles || [];
+  return Array.isArray(roles) && roles.some(r => String(r).toLowerCase() === "company admin".toLowerCase());
+}, [user?.roles]);
   const {
     employeeAttendance,
     loading,
@@ -143,6 +147,8 @@ export default function DashboardScreen({ navigation }) {
       }
     }
 
+ 
+
     // ✅ 9 hours from clock-in (time-of-day target)
     // NOTE: if someone clocks in late night, this can exceed 24h; handle wrap if you want.
     const targetOutSecRaw =
@@ -190,9 +196,10 @@ export default function DashboardScreen({ navigation }) {
   }, [employeeAttendance, nowTs]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }} edges={["left","right"]}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
-        {apiLoading ? (
+        {!isCompanyAdmin && (
+        apiLoading ? (
           <TodayCardSkeleton />
         ) : (
           <Card
@@ -291,8 +298,8 @@ export default function DashboardScreen({ navigation }) {
               </View>
             </Card.Content>
           </Card>
-        )}
-
+        )
+      )}
         <View style={{ paddingVertical: 12 }}>
           {apiLoading ? (
             <OnLeaveTodaySkeleton />
