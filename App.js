@@ -18,6 +18,7 @@ import AppStatusBar from "./src/components/AppStatusBar";
 import { addPushListeners } from "./src/services/pushNotifications";
 import { syncPushTokenToServer } from "./src/utils/pushTokenSync";
 import { fetchHrmOverviewRequest } from "./src/store/slices/hrmSlice";
+import PushBootstrapper from "./src/bootstrap/PushBootstrapper";
 
 const linking = {
   prefixes: [
@@ -94,7 +95,7 @@ function AppShell() {
         <AppDataProvider>
           <NavigationContainer linking={linking} theme={navTheme}>
             <AppStatusBar />
-            <PushBootstrap />
+            <PushBootstrapper />
             <RootNavigator />
           </NavigationContainer>
           <Toast />
@@ -102,6 +103,8 @@ function AppShell() {
       </AuthProvider>
     </PaperProvider>
   );
+
+
 }
 
 export default function App() {

@@ -1,40 +1,39 @@
-// ✅ NEW import
 import * as Notifications from "expo-notifications";
 import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addPushListeners } from "./src/services/pushNotifications";
-import { syncPushTokenToServer } from "./src/utils/pushTokenSync";
-import { fetchHrmOverviewRequest } from "./src/store/slices/hrmSlice";
+import { addPushListeners } from "../services/pushNotifications";
+import { syncPushTokenToServer } from "../utils/pushTokenSync";
+import { fetchHrmOverviewRequest } from "../store/slices/hrmSlice";
 
-function PushBootstrap() {
+export default function PushBootstrapper() {
   const dispatch = useDispatch();
-  const token = useSelector((s) => s.auth.token);
+  const jwt = useSelector((s) => s.auth.token);
 
   // store "tap" that happened when app was killed
   const pendingTapRef = useRef(null);
 
   const refresh = () => dispatch(fetchHrmOverviewRequest());
 
-  // 1) Register + sync token only when logged in
+  // ✅ 1) Register + sync token only when logged in
   useEffect(() => {
-    if (!token) return;
+    if (!jwt) return;
 
-    syncPushTokenToServer()
+    syncPushTokenToServer(jwt)
       .then((t) => console.log("✅ Push token synced:", t))
       .catch((e) => console.log("❌ Push sync failed:", e?.message || e));
-  }, [token]);
+  }, [jwt]);
 
-  // 2) Attach listeners (works when app is foreground/background)
+  // ✅ 2) Attach listeners (foreground + background tap)
   useEffect(() => {
     const unsubscribe = addPushListeners({
-      onReceive: () => {
-        // ✅ only works when app is running (foreground)
-        if (token) refresh();
+      onReceive: (n) => {
+        console.log("🔔 Foreground notification:", n?.request?.content);
+        if (jwt) refresh();
       },
       onTap: (resp) => {
-        // ✅ works when app is background
-        // If token not ready yet, store it and replay later
-        if (!token) {
+        console.log("👉 Notification tapped:", resp?.notification?.request?.content);
+
+        if (!jwt) {
           pendingTapRef.current = resp;
           return;
         }
@@ -43,29 +42,28 @@ function PushBootstrap() {
     });
 
     return unsubscribe;
-  }, [token, dispatch]);
+  }, [jwt, dispatch]);
 
-  // 3) Handle "app was killed and opened by tapping notification"
+  // ✅ 3) Handle “app killed then opened by tapping notification”
   useEffect(() => {
     (async () => {
       const last = await Notifications.getLastNotificationResponseAsync();
       if (last) pendingTapRef.current = last;
 
-      // If token already available now, process it
-      if (token && pendingTapRef.current) {
+      if (jwt && pendingTapRef.current) {
         refresh();
         pendingTapRef.current = null;
       }
     })();
-  }, [token, dispatch]);
+  }, [jwt, dispatch]);
 
-  // 4) If token becomes available later, replay stored tap
+  // ✅ 4) If jwt becomes available later, replay stored tap
   useEffect(() => {
-    if (token && pendingTapRef.current) {
+    if (jwt && pendingTapRef.current) {
       refresh();
       pendingTapRef.current = null;
     }
-  }, [token, dispatch]);
+  }, [jwt, dispatch]);
 
   return null;
 }
