@@ -200,7 +200,7 @@ export default function AppDrawer() {
       )}
 
 
-        <Drawer.Screen
+      {!canSeeLeave &&  <Drawer.Screen
           name="LeaveStatus"
           component={LeaveStatusScreen}
           options={{
@@ -213,7 +213,7 @@ export default function AppDrawer() {
               />
             ),
           }}
-        />
+        />}
 
       <Drawer.Screen
         name="ChangePasswordDrawer"

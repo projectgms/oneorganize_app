@@ -1,19 +1,57 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { View, StyleSheet, FlatList, Image } from "react-native";
-import { Card, Text, useTheme } from "react-native-paper";
+import {
+  ActivityIndicator,
+  Button,
+  Card,
+  IconButton,
+  Modal,
+  PaperProvider,
+  Portal,
+  Text,
+  useTheme,
+} from "react-native-paper";
 import { Dropdown } from "react-native-element-dropdown";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-import { getLeaveDetailsReq } from "./../../store/slices/leaveManageSlice";
+import {
+  getLeaveDetailsReq,
+  getAvailLeavesDataReq,
+} from "./../../store/slices/leaveManageSlice";
+import { useFocusEffect } from "@react-navigation/native";
 
-const LeaveStatusScreen = () => {
+const LeaveStatusScreen = ({ navigation }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
+
+  const [visible, setVisible] = useState(false);
+
+  const showModal = () => {
+    const currentYear = new Date().getFullYear();
+    setVisible(true);
+    dispatch(getAvailLeavesDataReq({year: currentYear}))
+  };
+  const hideModal = () => setVisible(false);
 
   // ✅ FIX: you forgot to import useSelector in your code
   const { leaveDetailList } = useSelector((s) => s.leaveManage);
 
   const loading = useSelector((s) => s.leaveManage.loading?.listLoading);
+  const availLeavesLoading = useSelector(
+    (s) => s.leaveManage.loading?.avialLeavesLoading,
+  );
+
+  const availLeavesData = useSelector((s) => s.leaveManage.avialLeavesData);
+
+  // useFocusEffect(
+
+  //   React.useCallback(() => {
+
+  //         const currentYear = new Date().getFullYear();
+
+  //     dispatch(getLeaveDetailsReq({year: currentYear}));
+  //   }, [dispatch]),
+  // );
 
   // ✅ dropdown styling same as ApplyLeaveScreen
   const border = theme.dark ? "#334155" : "#e5e7eb";
@@ -51,14 +89,69 @@ const LeaveStatusScreen = () => {
   // ✅ If API already returns year-filtered list, you can skip this filter.
   const displayLeaves = useMemo(() => {
     if (!selectedYear) return [];
-    return leavesFromStore.filter((l) => getYear(l?.leave_date) === String(selectedYear));
+    return leavesFromStore.filter(
+      (l) => getYear(l?.leave_date) === String(selectedYear),
+    );
   }, [leavesFromStore, selectedYear]);
 
+  // const leaveSummaryData = [
+  //   {
+  //     employee_id: 24,
+  //     employee_name: "Pradum Shinde",
+  //     leave_type: "Paid",
+  //     no_of_leaves: "15+0=15",
+  //     applicable_leaves: "0+0= 0",
+  //     monthly_limit: 3,
+  //     paid_leave_taken: 0,
+  //     available_paid_leave: 0,
+  //   },
+  // ];
+
+  const leaveSummaryData = availLeavesData || [];
+
+  const LABELS = {
+    leave_type: "Leave Type",
+    no_of_leaves: "No. of Leaves",
+    applicable_leaves: "Applicable Leaves",
+    monthly_limit: "Monthly Limit",
+    paid_leave_taken: "Paid Leave Taken",
+    available_paid_leave: "Available Paid Leave",
+  };
+
+  const HIDDEN_KEYS = new Set(["employee_id", "employee_name"]);
+
+  const formatKey = (k) =>
+    LABELS[k] ?? k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <View style={styles.header}>
+        <IconButton
+          icon="chevron-left"
+          size={28}
+          onPress={() => navigation?.goBack?.()}
+        />
+        <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>
+          Leave Status
+        </Text>
+
+        <Button mode={"contained"} onPress={showModal}>
+          Show Leave Details
+        </Button>
+        <View style={{ width: 44 }} />
+      </View>
+
       {/* Dropdown */}
       <View style={{ padding: 16, paddingBottom: 8 }}>
-        <Text style={{ color: theme.colors.onSurface, fontWeight: "700", marginBottom: 8 }}>
+        <Text
+          style={{
+            color: theme.colors.onSurface,
+            fontWeight: "700",
+            marginBottom: 8,
+          }}
+        >
           Select Year
         </Text>
 
@@ -77,8 +170,14 @@ const LeaveStatusScreen = () => {
               borderColor: border,
             },
           ]}
-          placeholderStyle={[styles.placeholder, { color: theme.colors.onSurface }]}
-          selectedTextStyle={[styles.selectedText, { color: theme.colors.onSurface }]}
+          placeholderStyle={[
+            styles.placeholder,
+            { color: theme.colors.onSurface },
+          ]}
+          selectedTextStyle={[
+            styles.selectedText,
+            { color: theme.colors.onSurface },
+          ]}
           itemTextStyle={{ color: "#5D3FD3" }}
           data={yearOptions}
           labelField="label"
@@ -124,6 +223,106 @@ const LeaveStatusScreen = () => {
           contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
         />
       )}
+
+      {/*  Leave Details Modal Below */}
+
+      <Portal>
+        <Modal
+          visible={visible}
+          onDismiss={hideModal}
+          dismissable
+          contentContainerStyle={{
+            backgroundColor: theme.colors.surface,
+            padding: 16,
+            marginHorizontal: 16,
+            borderRadius: 12,
+          }}
+        >
+          {/* Header with title + close icon */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.colors.onSurface,
+                fontSize: 16,
+                fontWeight: "700",
+              }}
+            >
+              Leave Details
+            </Text>
+
+            <IconButton
+              onPress={hideModal}
+              size={22}
+              icon={({ size, color }) => (
+                <MaterialCommunityIcons
+                  name="close"
+                  size={size}
+                  color={color}
+                />
+              )}
+            />
+          </View>
+
+          {availLeavesLoading ? (
+            <ActivityIndicator />
+          ) : (
+            <View>
+              {/* your content here... */}
+              {Array.isArray(leaveSummaryData) && leaveSummaryData.length ? (
+                leaveSummaryData.map((row, idx) => {
+                  const entries = Object.entries(row).filter(
+                    ([key]) => !HIDDEN_KEYS.has(key),
+                  );
+
+                  return (
+                    <View key={idx} style={{ marginBottom: 12 }}>
+                      {entries.map(([key, value]) => (
+                        <View
+                          key={key}
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            paddingVertical: 8,
+                            borderBottomWidth: 1,
+                            borderBottomColor: theme.dark
+                              ? "#334155"
+                              : "#e5e7eb",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: theme.colors.onSurface,
+                              fontWeight: "600",
+                              flex: 1,
+                              paddingRight: 12,
+                            }}
+                          >
+                            {formatKey(key)}
+                          </Text>
+                          <Text style={{ color: theme.colors.onSurface }}>
+                            {String(value)}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  );
+                })
+              ) : (
+                <Text style={{ color: theme.colors.onSurface }}>
+                  No leave details available.
+                </Text>
+              )}
+            </View>
+          )}
+        </Modal>
+      </Portal>
     </View>
   );
 };
@@ -136,12 +335,25 @@ function EmptyLeavesCard({ title, subtitle, imageSource }) {
 
   return (
     <View style={{ padding: 16, paddingTop: 8 }}>
-      <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} mode="contained">
+      <Card
+        style={[styles.card, { backgroundColor: theme.colors.surface }]}
+        mode="contained"
+      >
         <Card.Content style={{ alignItems: "center", paddingVertical: 18 }}>
           {!!imageSource && (
-            <Image source={imageSource} style={styles.emptyImage} resizeMode="contain" />
+            <Image
+              source={imageSource}
+              style={styles.emptyImage}
+              resizeMode="contain"
+            />
           )}
-          <Text style={{ color: theme.colors.onSurface, fontWeight: "800", fontSize: 16 }}>
+          <Text
+            style={{
+              color: theme.colors.onSurface,
+              fontWeight: "800",
+              fontSize: 16,
+            }}
+          >
             {title}
           </Text>
           {!!subtitle && (
@@ -169,13 +381,28 @@ function LeaveCard({ leave }) {
 
   const border = theme.dark ? "#334155" : "#e5e7eb";
 
-
   return (
-    <Card style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: border, borderWidth:1, elevation:2 }]} mode="contained">
+    <Card
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: border,
+          borderWidth: 1,
+          elevation: 2,
+        },
+      ]}
+      mode="contained"
+    >
       <Card.Content>
         <View style={styles.rowBetween}>
           <View>
-            <Text style={[styles.label, { color: theme.colors.onSurface, opacity: 0.7 }]}>
+            <Text
+              style={[
+                styles.label,
+                { color: theme.colors.onSurface, opacity: 0.7 },
+              ]}
+            >
               Leave Date
             </Text>
             <Text style={[styles.value, { color: theme.colors.onSurface }]}>
@@ -184,7 +411,10 @@ function LeaveCard({ leave }) {
           </View>
 
           <View style={[styles.statusPill, statusStyles.pill]}>
-            <Text style={[styles.statusText, statusStyles.text]} numberOfLines={1}>
+            <Text
+              style={[styles.statusText, statusStyles.text]}
+              numberOfLines={1}
+            >
               {leave?.status || "-"}
             </Text>
           </View>
@@ -198,10 +428,18 @@ function LeaveCard({ leave }) {
 
         {!!leave?.leave_reason && (
           <View style={{ marginTop: 10 }}>
-            <Text style={[styles.label, { color: theme.colors.onSurface, opacity: 0.7 }]}>
+            <Text
+              style={[
+                styles.label,
+                { color: theme.colors.onSurface, opacity: 0.7 },
+              ]}
+            >
               Reason
             </Text>
-            <Text style={[styles.reason, { color: theme.colors.onSurface }]} numberOfLines={3}>
+            <Text
+              style={[styles.reason, { color: theme.colors.onSurface }]}
+              numberOfLines={3}
+            >
               {leave.leave_reason}
             </Text>
           </View>
@@ -215,8 +453,15 @@ function InfoRow({ label, value }) {
   const theme = useTheme();
   return (
     <View style={styles.infoRow}>
-      <Text style={[styles.label, { color: theme.colors.onSurface, opacity: 0.7 }]}>{label}</Text>
-      <Text style={[styles.valueSmall, { color: theme.colors.onSurface }]} numberOfLines={1}>
+      <Text
+        style={[styles.label, { color: theme.colors.onSurface, opacity: 0.7 }]}
+      >
+        {label}
+      </Text>
+      <Text
+        style={[styles.valueSmall, { color: theme.colors.onSurface }]}
+        numberOfLines={1}
+      >
         {value || "-"}
       </Text>
     </View>
@@ -228,12 +473,20 @@ function LeaveCardSkeleton() {
   const theme = useTheme();
 
   return (
-    <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} mode="contained">
+    <Card
+      style={[styles.card, { backgroundColor: theme.colors.surface }]}
+      mode="contained"
+    >
       <Card.Content>
         <View style={styles.rowBetween}>
           <View style={{ flex: 1 }}>
             <View style={[styles.skelLine, { width: "35%" }]} />
-            <View style={[styles.skelLine, { width: "60%", marginTop: 8, height: 14 }]} />
+            <View
+              style={[
+                styles.skelLine,
+                { width: "60%", marginTop: 8, height: 14 },
+              ]}
+            />
           </View>
           <View style={styles.skelPill} />
         </View>
@@ -304,12 +557,21 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderRadius: 14,
   },
+  modalContainer: { backgroundColor: "white", padding: 20 },
 
   emptyImage: {
     width: 140,
     height: 140,
     marginBottom: 10,
   },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 6,
+    paddingHorizontal: 4,
+  },
+  headerTitle: { flex: 1, fontSize: 18, fontWeight: "700" },
 
   // ✅ Dropdown styles same as ApplyLeaveScreen
   dropdown: {
