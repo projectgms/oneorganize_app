@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "306885698562",
+    "project_id": "oneorganize",
+    "storage_bucket": "oneorganize.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:306885698562:android:9b1f315d7c098da54c731b",
+        "android_client_info": {
+          "package_name": "com.anonymous.oneorganize"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEwqvegvU_zZZeNI-ZnsRH7NFWviTEelw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

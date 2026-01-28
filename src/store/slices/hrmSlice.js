@@ -10,6 +10,7 @@ const initialState = {
   joiningAnniversary: null,
   todaysLeave: null,
   user: null,
+  annoucements: [],
 };
 
 const hrmSlice = createSlice({
@@ -25,7 +26,9 @@ const hrmSlice = createSlice({
       state.overview = action.payload || null;
       state.employeeAttendance = action.payload?.employeeAttendance || null;
       state.birthdays = action.payload?.birthday;
-      state.annoucements = action.payload?.announcements;
+      // state.annoucements = action.payload?.announcements;
+      state.annoucements = action.payload?.announcements || [];
+
       state.joiningAnniversary = action.payload?.joining_date;
       state.todaysLeave = action.payload?.todays_leave;
       state.user= action.payload?.emp;
