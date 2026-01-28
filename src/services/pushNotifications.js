@@ -6,6 +6,7 @@ import * as SecureStore from "expo-secure-store";
 
 const PUSH_TOKEN_KEY = "expo_push_token";
 
+// ✅ Foreground behavior
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -33,6 +34,12 @@ export async function getStoredExpoPushToken() {
 export async function saveExpoPushToken(token) {
   try {
     await SecureStore.setItemAsync(PUSH_TOKEN_KEY, token);
+  } catch {}
+}
+
+export async function deleteExpoPushToken() {
+  try {
+    await SecureStore.deleteItemAsync(PUSH_TOKEN_KEY);
   } catch {}
 }
 
@@ -70,9 +77,13 @@ export async function registerForPushTokenAsync() {
   }
 
   const projectId = getProjectId();
-  const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  console.log("✅ EAS ProjectId:", projectId);
 
-  await saveExpoPushToken(token);
+  const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  console.log("✅ Expo Push Token:", token);
+
+  // ❗DO NOT SAVE here.
+  // We will save only after server sync success.
   return token;
 }
 
