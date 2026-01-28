@@ -6,6 +6,7 @@ const initialState = {
     createLeaveLoading: false,
   },
   data: null,
+  leaveDetailList: null,
   error: null,
 };
 
@@ -24,11 +25,28 @@ const leaveManagementSlice = createSlice({
       state.loading.createLeaveLoading = false;
       state.error = action.payload;
     },
+
+    getLeaveDetailsReq: (state, action) => {
+      state.loading.listLoading = true;
+    },
+    getLeaveDetailsSucc: (state, action) => {
+      state.loading.listLoading = false;
+      state.leaveDetailList = action.payload;
+    },
+    getLeaveDetailsFail: (state, action) => {
+      state.loading.listLoading = false;
+      state.error = action.payload;
+    },
   },
 });
 
-
-export const {createLeaveFail, createLeaveReq, createLeaveSucc} = leaveManagementSlice.actions;
+export const {
+  createLeaveFail,
+  createLeaveReq,
+  createLeaveSucc,
+  getLeaveDetailsFail,
+  getLeaveDetailsReq,
+  getLeaveDetailsSucc,
+} = leaveManagementSlice.actions;
 
 export default leaveManagementSlice.reducer;
-

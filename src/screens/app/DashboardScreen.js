@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { FlatList, ScrollView, View } from "react-native";
 import { Card, ProgressBar, Text, Button, useTheme } from "react-native-paper";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchHrmOverviewRequest } from "../../store/slices/hrmSlice";
+import { fetchTodayTaskRequest } from "../../store/slices/todaysSlice";
 import { getProfileReq } from "../../store/slices/ProfileSlice";
 import AvatarRow from "./components/DashboardScreen/AvatarRow";
 import CollapsibleSection from "./components/DashboardScreen/CollapsibleSection";
@@ -10,7 +11,10 @@ import TaskCard from "./components/DashboardScreen/TaskCard";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TodayCardSkeleton from "./components/DashboardScreen/Skeletons/TodayCardSkeleton";
 import OnLeaveTodaySkeleton from "./components/DashboardScreen/Skeletons/OnLeaveTodaySkeleton";
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import NoTasksCard from "./components/DashboardScreen/NoTasksCard";
+import { EmptyPeopleCard } from "./components/DashboardScreen/EmptyPeopleCard";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -54,19 +58,27 @@ export default function DashboardScreen({ navigation }) {
     todaysLeave,
   } = useSelector((s) => s.hrm);
 
-  const {profileLoading} = useSelector((s) => s.profile);
+  const { todayTasks, todayTaskLoading } = useSelector((s) => s.todayTasks);
+
+  const { profileLoading } = useSelector((s) => s.profile);
 
   const apiLoading = profileLoading || loading;
 
   // console.log("employeeAttendance:",employeeAttendance);
 
- useFocusEffect(
-  React.useCallback(() => {
-    // console.log("Screen focused, making API calls");
-    dispatch(fetchHrmOverviewRequest());
-    dispatch(getProfileReq());
-  }, [dispatch])
-);
+  const isEmpty = (arr) => !Array.isArray(arr) || arr.length === 0;
+
+  const noPeopleUpdates =
+    isEmpty(todaysLeave) && isEmpty(birthdays) && isEmpty(joiningAnniversary);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // console.log("Screen focused, making API calls");
+      dispatch(fetchHrmOverviewRequest());
+      dispatch(getProfileReq());
+      dispatch(fetchTodayTaskRequest());
+    }, [dispatch]),
+  );
 
   // ✅ timer tick
   const [nowTs, setNowTs] = useState(Date.now());
@@ -178,179 +190,178 @@ export default function DashboardScreen({ navigation }) {
   }, [employeeAttendance, nowTs]);
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
-      {apiLoading ? (
-        <TodayCardSkeleton />
-      ) : (
-        <Card
-          style={{
-            marginBottom: 12,
-            backgroundColor: theme.colors.background,
-            elevated: 0,
-          }}
-        >
-          <Card.Content>
-            <View
-              style={{ flexDirection: "row", justifyContent: "space-between" }}
-            >
-              <Text
-                style={{
-                  color: theme.colors.onSurface,
-                  fontSize: 16,
-                  fontWeight: "700",
-                }}
-              >
-                Today
-              </Text>
-              <Text style={{ color: theme.colors.onSurface }}>
-                {computed.dateLabel}
-              </Text>
-            </View>
-
-            <View style={{ height: 10 }} />
-
-            <Text style={{ color: theme.colors.onSurface }}>
-              {loading ? "Loading..." : computed.note}
-            </Text>
-
-            {!!error && (
-              <Text style={{ color: "#fb7185", marginTop: 6 }}>Something Went Wrong Please Try Again</Text>
-            )}
-
-            <View style={{ height: 16 }} />
-
-            <View
-              style={{ flexDirection: "row", justifyContent: "space-between" }}
-            >
-              <Text
-                style={{
-                  color: theme.colors.onSurface,
-                  fontSize: 18,
-                  fontWeight: "700",
-                }}
-              >
-                <MaterialCommunityIcons
-                  name="clock-in"
-                  size={25}
-                  color={theme.colors.onSurface}
-                />{" "}
-                {computed.workedStr}
-              </Text>
-              <Text
-                style={{
-                  color: theme.colors.onSurface,
-                  fontSize: 16,
-                  fontWeight: "700",
-                }}
-              >
-                <MaterialCommunityIcons
-                  name="clock-out"
-                  size={25}
-                  color={theme.colors.onSurface}
-                />{" "}
-                {computed.breakStr}
-              </Text>
-            </View>
-
-            <View style={{ height: 10 }} />
-
-            <ProgressBar progress={computed.progress} />
-
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginTop: 6,
-              }}
-            >
-              <Text style={{ color: theme.colors.onSurface }}>0 hrs</Text>
-              <Text style={{ color: theme.colors.onSurface }}>
-                {computed.targetLabel}
-              </Text>
-            </View>
-          </Card.Content>
-        </Card>
-      )}
-
-      <View style={{ paddingVertical: 12 }}>
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
         {apiLoading ? (
-          <OnLeaveTodaySkeleton />
+          <TodayCardSkeleton />
         ) : (
-          <CollapsibleSection
-            collapsedContent={
+          <Card
+            style={{
+              marginBottom: 12,
+              backgroundColor: theme.colors.background,
+              elevated: 0,
+            }}
+          >
+            <Card.Content>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.onSurface,
+                    fontSize: 16,
+                    fontWeight: "700",
+                  }}
+                >
+                  Today
+                </Text>
+                <Text style={{ color: theme.colors.onSurface }}>
+                  {computed.dateLabel}
+                </Text>
+              </View>
+
+              <View style={{ height: 10 }} />
+
+              <Text style={{ color: theme.colors.onSurface }}>
+                {loading ? "Loading..." : computed.note}
+              </Text>
+
+              {!!error && (
+                <Text style={{ color: "#fb7185", marginTop: 6 }}>
+                  Something Went Wrong Please Try Again
+                </Text>
+              )}
+
+              <View style={{ height: 16 }} />
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.onSurface,
+                    fontSize: 18,
+                    fontWeight: "700",
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="clock-in"
+                    size={25}
+                    color={theme.colors.onSurface}
+                  />{" "}
+                  {computed.workedStr}
+                </Text>
+                <Text
+                  style={{
+                    color: theme.colors.onSurface,
+                    fontSize: 16,
+                    fontWeight: "700",
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="clock-out"
+                    size={25}
+                    color={theme.colors.onSurface}
+                  />{" "}
+                  {computed.breakStr}
+                </Text>
+              </View>
+
+              <View style={{ height: 10 }} />
+
+              <ProgressBar progress={computed.progress} />
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  marginTop: 6,
+                }}
+              >
+                <Text style={{ color: theme.colors.onSurface }}>0 hrs</Text>
+                <Text style={{ color: theme.colors.onSurface }}>
+                  {computed.targetLabel}
+                </Text>
+              </View>
+            </Card.Content>
+          </Card>
+        )}
+
+        <View style={{ paddingVertical: 12 }}>
+          {apiLoading ? (
+            <OnLeaveTodaySkeleton />
+          ) : noPeopleUpdates ? (
+            <EmptyPeopleCard
+              title="No Updates Today"
+              subtitle="No one is on leave, birthday, or work anniversary today."
+              imageSource={require("./../../../assets/notification-bell.png")}
+            />
+          ) : (
+            <CollapsibleSection
+              collapsedContent={
+                <AvatarRow
+                  title="On Leave Today"
+                  users={todaysLeave}
+                  ringColor="#7393B3"
+                  fallbackIcon="account-circle"
+                />
+              }
+              badgeTextCollapsed="Today's Birthdays"
+              badgeTextCollapsed2="Today's Joining Anniversary"
+            >
               <AvatarRow
-                title="On Leave Today"
-                users={todaysLeave}
-                ringColor="#7393B3"
+                title="Birthdays"
+                users={birthdays}
+                ringColor="#98FB98"
                 fallbackIcon="account-circle"
               />
-            }
-            badgeTextCollapsed="Today's Birthdays"
-            badgeTextCollapsed2="Today's Joining Anniversary"
-          >
-            {/* This part is hidden until expanded */}
-            <AvatarRow
-              title="Birthdays"
-              // users={[
-              //   { id: 1, name: "Kadin Vetrovs", avatarUrl: "" }, // will show icon
-              //   {
-              //     id: 2,
-              //     name: "Zaire Botosh",
-              //     avatarUrl: "https://i.pravatar.cc/200?img=2",
-              //   },
-              // ]}
-              users={birthdays}
-              ringColor="#98FB98"
-              fallbackIcon="account-circle"
-            />
 
-            {/* Joining Anniversary Row Below */}
+              <AvatarRow
+                title="Joining Anniversaries"
+                users={joiningAnniversary}
+                ringColor="#FFC0CB"
+                fallbackIcon="account-circle"
+              />
+            </CollapsibleSection>
+          )}
+        </View>
 
-            <AvatarRow
-              title="Joining Anniversaries"
-              users={joiningAnniversary}
-              ringColor="#FFC0CB"
-              fallbackIcon="account-circle"
-            />
-          </CollapsibleSection>
-        )}
-      </View>
-
-      <View style={{ marginVertical: 24 }}>
-        <Text
-          style={{
-            fontSize: 16,
-            fontWeight: "600",
-            marginVertical: 12,
-            color: theme.colors.onSurface,
-            paddingHorizontal: 12,
-          }}
-        >
-          Today's Tasks
-        </Text>
-
-        {apiLoading ? (
-          <OnLeaveTodaySkeleton />
-        ) : (
-          <TaskCard
-            task={{
-              PROJECT: "Attendance Keeper Mobile",
-              TASK_SEQ: "15",
-              TASK_TITLE: "Integrate Worklog API with Screen",
-              DESCRIPTION:
-                "Brainstorming brings team members' diverse experience into play.",
-              PRIORITY: "High",
-              STATUS: "In Progress",
-              PROGRESS: 65,
-              EST_HOURS: 12,
-              START_DATE: "2023-08-10",
-              END_DATE: "2023-08-15",
-              ASSIGNED_TO: "Ahmad",
+        <View style={{ marginVertical: 24 }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "600",
+              marginVertical: 12,
+              color: theme.colors.onSurface,
+              paddingHorizontal: 12,
             }}
-            onPress={() => console.log("open task")}
-          />
-        )}
-      </View>
-    </ScrollView>
+          >
+            Today's Tasks
+          </Text>
+
+          {todayTaskLoading ? (
+            <OnLeaveTodaySkeleton />
+          ) : todayTasks?.length ? (
+            <FlatList
+              data={todayTasks}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={({ item }) => <TaskCard task={item} />}
+              scrollEnabled={false}
+              ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+            />
+          ) : (
+            <NoTasksCard
+              imageSource={require("./../../../assets/empty_tasks.png")}
+            />
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
