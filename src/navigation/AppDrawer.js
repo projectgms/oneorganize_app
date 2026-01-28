@@ -19,15 +19,20 @@ import AppearanceScreen from "../screens/app/AppearanceScreen";
 import AppHeader from "../components/AppHeader";
 import NotificationScreen from "../screens/app/NotificationScreen";
 
+
 import { hasAnyPermission } from "../store/selectors/authSelectors";
 import { logoutRequest } from "../store/slices/authSlice";
 import OneOrganizeLogo from "./../../assets/adaptive-icon.png";
+import OneOrganizeLogoWhite from "./../../assets/one-organize-white-logo.png";
+import LeaveStatusScreen from './../screens/app/LeaveStatusScreen';
 
 const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent({ onLogout, ...props }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+
+  const isDarkMode = theme.dark; 
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.surface }}>
@@ -52,7 +57,7 @@ function CustomDrawerContent({ onLogout, ...props }) {
           }}
         >
           <Image
-            source={OneOrganizeLogo}
+            source={isDarkMode ? OneOrganizeLogoWhite : OneOrganizeLogo}
             style={{ width: 120, height: 60 }}
             resizeMode="contain"
           />
@@ -101,9 +106,9 @@ export default function AppDrawer() {
     theme.colors.primary;
 
   const canSeeLeave = hasAnyPermission(permissions, [
-    "show leave",
-    "manage leave",
-    "create leave",
+    // "show leave",
+    // "manage leave",
+    // "create leave",
     "edit leave",
   ]);
 
@@ -193,6 +198,22 @@ export default function AppDrawer() {
           }}
         />
       )}
+
+
+        <Drawer.Screen
+          name="LeaveStatus"
+          component={LeaveStatusScreen}
+          options={{
+            title: "Leave Status",
+            drawerIcon: ({ color, size }) => (
+              <MaterialCommunityIcons
+                name="clipboard-check-outline"
+                color={color}
+                size={size}
+              />
+            ),
+          }}
+        />
 
       <Drawer.Screen
         name="ChangePasswordDrawer"
