@@ -107,6 +107,7 @@ function* handleGetLeaveDates(action) {
 // 2) PATCH /hr/update-leaves/{id}
 function* handleUpdateLeaveStatus(action) {
   try {
+    console.log("handleUpdateLeaveStatus action.payload --", action.payload)
     const res = yield call(updateLeaveStatusApi, action.payload);
 
     // normalize updated row
