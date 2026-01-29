@@ -1,4 +1,5 @@
-import { call, put, takeLatest, select } from "redux-saga/effects";
+import { call, put, takeLatest, select, race, delay } from "redux-saga/effects";
+
 import api from "../../laravelApiClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
@@ -19,6 +20,9 @@ import {
   logoutRequest,
   logoutSuccess,
   logoutFailure,
+    hydrateAuthRequest,
+  hydrateAuthSuccess,
+  hydrateAuthFailure,
 
   // ✅ ADD these in authSlice exports (snippet below)
   meRequest,
@@ -54,6 +58,8 @@ const safeRemoveMany = async (keys = []) => {
 };
 
 const selectToken = (s) => s.auth.token;
+const selectTenant = (s) => s.auth.tenant;
+
 
 // ✅ ME API (refresh logged-in user)
 function* handleMe() {
@@ -80,9 +86,29 @@ function* handleMe() {
     yield call(safeSet, "auth_brand_settings", JSON.stringify(brandSettings || null));
 
     yield put(meSuccess({ user, roles, permissions, brandSettings }));
+  // } catch (err) {
+  //   yield put(meFailure(getErrorMessage(err)));
+  // }
   } catch (err) {
-    yield put(meFailure(getErrorMessage(err)));
+  const status = err?.response?.status;
+
+  if (status === 401) {
+    // token expired/invalid → clear storage + logout
+    yield call(safeRemoveMany, [
+      "auth_token",
+      "auth_token_type",
+      "auth_user",
+      "auth_permissions",
+      "auth_brand_settings",
+      "tenant",
+    ]);
+    yield put(resetProfileState());
+    yield put(logoutSuccess());
+    return;
   }
+
+  yield put(meFailure(getErrorMessage(err)));
+}
 }
 
 // LOGIN
@@ -234,34 +260,127 @@ function* handleChangePassword(action) {
 }
 
 // LOGOUT
+// function* handleLogout() {
+//   const keysToClear = [
+//     "auth_token",
+//     "auth_token_type",
+//     "auth_user",
+//     "auth_permissions",
+//     "auth_brand_settings",
+//     "tenant", // ✅ clear tenant (multi-tenant safety)
+//   ];
+
+//   try {
+//     yield call(api.post, "/auth/logout");
+//   } catch (e) {
+//     // ignore API failure
+//   }
+
+//   // ✅ clear local storage always
+//   yield call(safeRemoveMany, keysToClear);
+
+//   // ✅ clear old profile in redux
+//   yield put(resetProfileState());
+
+//   // ✅ auth slice clears auth state
+//   yield put(logoutSuccess());
+// }
 function* handleLogout() {
+  const token = yield select(selectToken);
+  const tenant = (yield select(selectTenant)) || process.env.EXPO_PUBLIC_TENANT;
+
   const keysToClear = [
     "auth_token",
     "auth_token_type",
     "auth_user",
     "auth_permissions",
     "auth_brand_settings",
-    "tenant", // ✅ clear tenant (multi-tenant safety)
+    "tenant",
   ];
 
-  try {
-    yield call(api.post, "/auth/logout");
-  } catch (e) {
-    // ignore API failure
-  }
-
-  // ✅ clear local storage always
+  // ✅ 1) Logout immediately (NO waiting)
   yield call(safeRemoveMany, keysToClear);
-
-  // ✅ clear old profile in redux
   yield put(resetProfileState());
-
-  // ✅ auth slice clears auth state
   yield put(logoutSuccess());
+
+  // ✅ 2) Best-effort server logout (don’t block UI)
+  if (token) {
+    try {
+      yield race([
+        call(api.post, "/auth/logout", null, {
+          timeout: 5000,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            ...(tenant ? { "X-Tenant": tenant } : {}),
+          },
+        }),
+        delay(5000),
+      ]);
+    } catch (e) {
+      // ignore
+    }
+  }
 }
+function* handleHydrateAuth() {
+  try {
+    const keys = [
+      "auth_token",
+      "auth_token_type",
+      "auth_user",
+      "auth_permissions",
+      "auth_brand_settings",
+      "tenant",
+    ];
+
+    const pairs = yield call(AsyncStorage.multiGet, keys);
+    const map = Object.fromEntries(pairs);
+
+    const token = map.auth_token || null;
+
+    // ✅ no token → go to login
+    if (!token) {
+      yield put(hydrateAuthSuccess(null));
+      return;
+    }
+
+    const tokenType = map.auth_token_type || "Bearer";
+    const tenant = map.tenant || process.env.EXPO_PUBLIC_TENANT;
+
+    const user = map.auth_user ? JSON.parse(map.auth_user) : null;
+    const permissions = map.auth_permissions ? JSON.parse(map.auth_permissions) : [];
+    const brandSettings = map.auth_brand_settings
+      ? JSON.parse(map.auth_brand_settings)
+      : null;
+
+    const roles = user?.roles || [];
+
+    // ✅ set redux auth from stored token
+    yield put(
+      hydrateAuthSuccess({
+        token,
+        tokenType,
+        tenant,
+        user,
+        roles,
+        permissions,
+        brandSettings,
+      })
+    );
+
+    // ✅ validate token + refresh user
+    yield put(meRequest());
+    yield put(getProfileReq());
+    yield put(fetchHrmOverviewRequest());
+  } catch (e) {
+    yield put(hydrateAuthFailure());
+    yield put(hydrateAuthSuccess(null)); // fail-safe
+  }
+}
+
 
 export default function* authSaga() {
   yield takeLatest(loginRequest.type, handleLogin);
+    yield takeLatest(hydrateAuthRequest.type, handleHydrateAuth);
   yield takeLatest(meRequest.type, handleMe);
   yield takeLatest(forgotPasswordRequest.type, handleForgotPassword);
   yield takeLatest(resetPasswordRequest.type, handleResetPassword);

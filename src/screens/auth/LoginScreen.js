@@ -88,9 +88,9 @@ export default function LoginScreen({ navigation }) {
     }, [runCardIntro])
   );
 
-  useEffect(() => {
-    if (token) navigation.replace("Dashboard");
-  }, [token, navigation]);
+  // useEffect(() => {
+  //   if (token) navigation.replace("Dashboard");
+  // }, [token, navigation]);
 
   useEffect(() => {
     return () => dispatch(clearAuthError());
@@ -225,7 +225,7 @@ export default function LoginScreen({ navigation }) {
                 loading={loading}
                 disabled={loading}
                 buttonColor={COLORS.btnBlue}
-                textColor="#fff"
+                textColor="#000"
                 style={styles.loginBtn}
                 contentStyle={styles.loginBtnContent}
                 labelStyle={styles.loginBtnLabel}

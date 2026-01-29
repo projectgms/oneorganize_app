@@ -52,7 +52,7 @@ export default function MainTabs() {
         }}
       />
 
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Gantt"
         component={GanttScreen}
         options={{
@@ -61,7 +61,7 @@ export default function MainTabs() {
             <MaterialCommunityIcons name="chart-gantt" color={color} size={size} />
           ),
         }}
-      />
+      /> */}
       
     </Tab.Navigator>
   );

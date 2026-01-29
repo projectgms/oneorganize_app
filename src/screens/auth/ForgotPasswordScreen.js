@@ -194,7 +194,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                 loading={forgotLoading}
                 disabled={forgotLoading}
                 buttonColor={COLORS.btnBlue}
-                textColor="#fff"
+                textColor="#000"
                 style={styles.loginBtn}
                 contentStyle={styles.loginBtnContent}
                 labelStyle={styles.loginBtnLabel}
