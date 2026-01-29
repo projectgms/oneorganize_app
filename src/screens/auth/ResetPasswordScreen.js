@@ -701,7 +701,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
                 loading={resetLoading}
                 disabled={resetLoading || !!localErr}
                 buttonColor={COLORS.btnBlue}
-                textColor="#fff"
+                textColor="#000"
                 style={styles.loginBtn}
                 contentStyle={styles.loginBtnContent}
                 labelStyle={styles.loginBtnLabel}
