@@ -12,13 +12,17 @@ import { AuthProvider } from "./src/context/AuthContext";
 import { AppDataProvider } from "./src/context/AppDataContext";
 import { store } from "./src/store";
 import Toast from "react-native-toast-message";
-import { ThemeModeProvider, useThemeMode } from "./src/context/ThemeModeContext";
+import {
+  ThemeModeProvider,
+  useThemeMode,
+} from "./src/context/ThemeModeContext";
 import AppStatusBar from "./src/components/AppStatusBar";
 
 import { addPushListeners } from "./src/services/pushNotifications";
 import { syncPushTokenToServer } from "./src/utils/pushTokenSync";
 import { fetchHrmOverviewRequest } from "./src/store/slices/hrmSlice";
 import PushBootstrapper from "./src/bootstrap/PushBootstrapper";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const linking = {
   prefixes: [
@@ -103,18 +107,18 @@ function AppShell() {
       </AuthProvider>
     </PaperProvider>
   );
-
-
 }
 
 export default function App() {
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <ThemeModeProvider>
-          <AppShell />
-        </ThemeModeProvider>
-      </SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <ThemeModeProvider>
+            <AppShell />
+          </ThemeModeProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </Provider>
   );
 }
