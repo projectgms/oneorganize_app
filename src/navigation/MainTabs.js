@@ -7,18 +7,19 @@ import { useTheme } from "react-native-paper";
 import DashboardScreen from "../screens/app/DashboardScreen";
 import ApplyLeaveScreen from "../screens/app/ApplyLeaveScreen";
 import GanttScreen from "../screens/app/GanttScreen";
+import ModernTodoScreen from "./../screens/app/ModernTodoScreen";
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs() {
   const theme = useTheme();
   const brandPrimary =
-    useSelector((s) => s.auth.brandSettings?.primary_color) || theme.colors.primary;
+    useSelector((s) => s.auth.brandSettings?.primary_color) ||
+    theme.colors.primary;
 
   return (
     <Tab.Navigator
-    initialRouteName="Dashboard"
-
+      initialRouteName="Dashboard"
       screenOptions={{
         headerShown: false,
         tabBarHideOnKeyboard: true,
@@ -36,7 +37,11 @@ export default function MainTabs() {
         options={{
           title: "Dashboard",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="view-dashboard-outline" color={color} size={size} />
+            <MaterialCommunityIcons
+              name="view-dashboard-outline"
+              color={color}
+              size={size}
+            />
           ),
         }}
       />
@@ -47,7 +52,26 @@ export default function MainTabs() {
         options={{
           title: "Apply Leave",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="calendar-plus" color={color} size={size} />
+            <MaterialCommunityIcons
+              name="calendar-plus"
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="TodoScreen"
+        component={ModernTodoScreen}
+        options={{
+          title: "Add To Do", // Changed from "Add To-Do" to "Tasks" for better Tab labeling
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="playlist-check" // OR "calendar-check-outline"
+              color={color}
+              size={size + 4} // Slightly larger icons look better in bottom tabs
+            />
           ),
         }}
       />
@@ -62,7 +86,6 @@ export default function MainTabs() {
           ),
         }}
       /> */}
-      
     </Tab.Navigator>
   );
 }
