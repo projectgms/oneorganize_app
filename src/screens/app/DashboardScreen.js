@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FlatList, ScrollView, View } from "react-native";
+import { FlatList, ScrollView, StyleSheet, View } from "react-native";
 import { Card, ProgressBar, Text, Button, useTheme } from "react-native-paper";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchHrmOverviewRequest } from "../../store/slices/hrmSlice";
@@ -15,6 +15,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import NoTasksCard from "./components/DashboardScreen/NoTasksCard";
 import { EmptyPeopleCard } from "./components/DashboardScreen/EmptyPeopleCard";
+import { LeaveBalanceCard } from "./components/DashboardScreen/LeaveBalanceCard";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -49,10 +50,15 @@ export default function DashboardScreen({ navigation }) {
   const theme = useTheme();
 
   const user = useSelector((s) => s.auth.user);
-     const isCompanyAdmin = useMemo(() => {
-  const roles = user?.roles || [];
-  return Array.isArray(roles) && roles.some(r => String(r).toLowerCase() === "company admin".toLowerCase());
-}, [user?.roles]);
+  const isCompanyAdmin = useMemo(() => {
+    const roles = user?.roles || [];
+    return (
+      Array.isArray(roles) &&
+      roles.some(
+        (r) => String(r).toLowerCase() === "company admin".toLowerCase(),
+      )
+    );
+  }, [user?.roles]);
   const {
     employeeAttendance,
     loading,
@@ -147,8 +153,6 @@ export default function DashboardScreen({ navigation }) {
       }
     }
 
- 
-
     // ✅ 9 hours from clock-in (time-of-day target)
     // NOTE: if someone clocks in late night, this can exceed 24h; handle wrap if you want.
     const targetOutSecRaw =
@@ -196,110 +200,113 @@ export default function DashboardScreen({ navigation }) {
   }, [employeeAttendance, nowTs]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={["left","right"]}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
-        {!isCompanyAdmin && (
-        apiLoading ? (
-          <TodayCardSkeleton />
-        ) : (
-          <Card
-            style={{
-              marginBottom: 12,
-              backgroundColor: theme.colors.background,
-              elevated: 0,
-            }}
-          >
-            <Card.Content>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text
+    <SafeAreaView style={{ flex: 1 }} edges={["left", "right"]}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingVertical:14, paddingBottom: 24 }}>
+        {!isCompanyAdmin &&
+          (apiLoading ? (
+            <TodayCardSkeleton />
+          ) : (
+            <Card
+              style={{
+                marginBottom: 12,
+                backgroundColor: theme.colors.background,
+                elevated: 0,
+              }}
+            >
+              <View style={styles.centeredWrapper}>
+                <LeaveBalanceCard available="4" total="15" />
+              </View>
+              <Card.Content>
+                <View
                   style={{
-                    color: theme.colors.onSurface,
-                    fontSize: 16,
-                    fontWeight: "700",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
                   }}
                 >
-                  Today
-                </Text>
+                  <Text
+                    style={{
+                      color: theme.colors.onSurface,
+                      fontSize: 16,
+                      fontWeight: "700",
+                    }}
+                  >
+                    Today
+                  </Text>
+                  <Text style={{ color: theme.colors.onSurface }}>
+                    {computed.dateLabel}
+                  </Text>
+                </View>
+
+                <View style={{ height: 10 }} />
+
                 <Text style={{ color: theme.colors.onSurface }}>
-                  {computed.dateLabel}
+                  {loading ? "Loading..." : computed.note}
                 </Text>
-              </View>
 
-              <View style={{ height: 10 }} />
+                {!!error && (
+                  <Text style={{ color: "#fb7185", marginTop: 6 }}>
+                    Something Went Wrong Please Try Again
+                  </Text>
+                )}
 
-              <Text style={{ color: theme.colors.onSurface }}>
-                {loading ? "Loading..." : computed.note}
-              </Text>
+                <View style={{ height: 16 }} />
 
-              {!!error && (
-                <Text style={{ color: "#fb7185", marginTop: 6 }}>
-                  Something Went Wrong Please Try Again
-                </Text>
-              )}
-
-              <View style={{ height: 16 }} />
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text
+                <View
                   style={{
-                    color: theme.colors.onSurface,
-                    fontSize: 18,
-                    fontWeight: "700",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
                   }}
                 >
-                  <MaterialCommunityIcons
-                    name="clock-in"
-                    size={25}
-                    color={theme.colors.onSurface}
-                  />{" "}
-                  {computed.workedStr}
-                </Text>
-                <Text
+                  <Text
+                    style={{
+                      color: theme.colors.onSurface,
+                      fontSize: 18,
+                      fontWeight: "700",
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name="clock-in"
+                      size={25}
+                      color={theme.colors.onSurface}
+                    />{" "}
+                    {computed.workedStr}
+                  </Text>
+                  <Text
+                    style={{
+                      color: theme.colors.onSurface,
+                      fontSize: 16,
+                      fontWeight: "700",
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name="clock-out"
+                      size={25}
+                      color={theme.colors.onSurface}
+                    />{" "}
+                    {computed.breakStr}
+                  </Text>
+                </View>
+
+                <View style={{ height: 10 }} />
+
+                <ProgressBar progress={computed.progress} />
+
+                <View
                   style={{
-                    color: theme.colors.onSurface,
-                    fontSize: 16,
-                    fontWeight: "700",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginTop: 6,
                   }}
                 >
-                  <MaterialCommunityIcons
-                    name="clock-out"
-                    size={25}
-                    color={theme.colors.onSurface}
-                  />{" "}
-                  {computed.breakStr}
-                </Text>
-              </View>
+                  <Text style={{ color: theme.colors.onSurface }}>0 hrs</Text>
+                  <Text style={{ color: theme.colors.onSurface }}>
+                    {computed.targetLabel}
+                  </Text>
+                </View>
+              </Card.Content>
+            </Card>
+          ))}
 
-              <View style={{ height: 10 }} />
-
-              <ProgressBar progress={computed.progress} />
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  marginTop: 6,
-                }}
-              >
-                <Text style={{ color: theme.colors.onSurface }}>0 hrs</Text>
-                <Text style={{ color: theme.colors.onSurface }}>
-                  {computed.targetLabel}
-                </Text>
-              </View>
-            </Card.Content>
-          </Card>
-        )
-      )}
         <View style={{ paddingVertical: 12 }}>
           {apiLoading ? (
             <OnLeaveTodaySkeleton />
@@ -372,3 +379,12 @@ export default function DashboardScreen({ navigation }) {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  centeredWrapper: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    paddingVertical: 4, // Adds a bit of vertical spacing
+  },
+});

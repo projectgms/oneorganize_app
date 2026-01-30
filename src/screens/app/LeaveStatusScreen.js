@@ -377,6 +377,8 @@ function EmptyLeavesCard({ title, subtitle, imageSource }) {
 /** ✅ Leave Card (excludes id / employee_id / employee_name) */
 function LeaveCard({ leave }) {
   const theme = useTheme();
+
+  console.log("LEAVE ", leave)
   const statusStyles = getStatusStyles(leave?.status);
 
   const border = theme.dark ? "#334155" : "#e5e7eb";
@@ -441,6 +443,25 @@ function LeaveCard({ leave }) {
               numberOfLines={3}
             >
               {leave.leave_reason}
+            </Text>
+          </View>
+        )}
+
+        {!!leave?.comment  && (
+          <View style={{ marginTop: 10 }}>
+            <Text
+              style={[
+                styles.label,
+                { color: theme.colors.onSurface, opacity: 0.7 },
+              ]}
+            >
+              Comment on your leave
+            </Text>
+            <Text
+              style={[styles.reason, { color: theme.colors.onSurface }]}
+              numberOfLines={3}
+            >
+              {leave.comment}
             </Text>
           </View>
         )}
