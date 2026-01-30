@@ -102,6 +102,18 @@ const leaveManagementSlice = createSlice({
       state.loading.updateLeaveStatusLoading = false;
       state.error = action.payload;
     },
+
+
+    updateBulkLeaveReq:(state,action) =>{
+      state.loading.updateLeaveStatusLoading = true;
+    },
+    updateBulkLeaveSucc:(state,action) =>{
+      state.loading.updateLeaveStatusLoading = false;
+    },
+    updateBulkLeaveFail:(state,action) =>{
+      state.loading.updateLeaveStatusLoading = false;
+      state.error = action.payload;
+    },
   },
 });
 
@@ -125,6 +137,11 @@ export const {
   updateLeaveStatusReq,
   updateLeaveStatusSucc,
   updateLeaveStatusFail,
+
+
+  updateBulkLeaveFail,
+  updateBulkLeaveReq,
+  updateBulkLeaveSucc,
 } = leaveManagementSlice.actions;
 
 export default leaveManagementSlice.reducer;

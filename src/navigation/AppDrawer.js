@@ -25,6 +25,7 @@ import { logoutRequest } from "../store/slices/authSlice";
 import OneOrganizeLogo from "./../../assets/adaptive-icon.png";
 import OneOrganizeLogoWhite from "./../../assets/one-organize-white-logo.png";
 import LeaveStatusScreen from './../screens/app/LeaveStatusScreen';
+import SingleLeaveDataScreen from './../screens/app/SingleLeaveDataScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -179,6 +180,16 @@ export default function AppDrawer() {
           drawerIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="bell-outline" color={color} size={size} />
           ),
+        }}
+      />
+
+       <Drawer.Screen
+        name="SingleLeaveDataScreen"
+        component={SingleLeaveDataScreen}
+        options={{ 
+          drawerItemStyle: { 
+            display: 'none' 
+          } 
         }}
       />
 

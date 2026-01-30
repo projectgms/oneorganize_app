@@ -1,3 +1,4 @@
+// In LeaveManagementScreen.js
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
@@ -10,13 +11,10 @@ import {
 import {
   Card,
   IconButton,
-  Modal,
-  Portal,
   Text,
-  TextInput,
-  useTheme,
   Button,
   Checkbox,
+  useTheme,
 } from "react-native-paper";
 import { Dropdown } from "react-native-element-dropdown";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -30,16 +28,7 @@ import {
   updateLeaveStatusReq,
 } from "./../../store/slices/leaveManageSlice";
 
-const STATUS_OPTIONS = [
-  { label: "Pending", value: "Pending" },
-  { label: "Approved", value: "Approved" },
-  { label: "Rejected", value: "Rejected" },
-];
-
-const LEAVE_TYPE_OPTIONS = [
-  { label: "Paid", value: "Paid" },
-  { label: "Unpaid", value: "Unpaid" },
-];
+import LeaveCard from './components/Leave_Manage/LeaveCard';
 
 export default function LeaveManagementScreen({ navigation }) {
   const theme = useTheme();
@@ -64,6 +53,7 @@ export default function LeaveManagementScreen({ navigation }) {
 
   // ✅ Redux list leaves
   const leaveDetailList = useSelector((s) => s.leaveManage.leaveDetailList);
+  console.log("leaveDetailList", leaveDetailList)
   const listLoading = useSelector((s) => s.leaveManage.loading.listLoading);
 
   const leavesFromStore = Array.isArray(leaveDetailList) ? leaveDetailList : [];
@@ -80,136 +70,14 @@ export default function LeaveManagementScreen({ navigation }) {
     dispatch(getLeaveDetailsReq({ year: selectedYear }));
   }, [selectedYear, dispatch]);
 
-  // ✅ Modal leave dates list (NEW)
-  const leaveDatesList = useSelector((s) => s.leaveManage.leaveDatesList);
-  const leaveDatesLoading = useSelector(
-    (s) => s.leaveManage.loading.leaveDatesLoading
-  );
-  const updateLoading = useSelector(
-    (s) => s.leaveManage.loading.updateLeaveStatusLoading
-  );
-
-  const leaveDates = Array.isArray(leaveDatesList) ? leaveDatesList : [];
-
-  const [visible, setVisible] = useState(false);
-  const [selectedLeave, setSelectedLeave] = useState(null);
-
-  // modal status dropdown
-  const [statusValue, setStatusValue] = useState("Pending");
-  const [leaveTypeValue, setLeaveTypeValue] = useState("Paid");
-  const [rejectReason, setRejectReason] = useState("");
-  const [selectedDates, setSelectedDates] = useState([]);
-
-  const isRejected = String(statusValue || "").toLowerCase() === "rejected";
-  const [isBulkUpdate, setIsBulkUpdate] = useState(false); // Track if bulk update is active
-
   const openLeave = (leave) => {
-    setSelectedLeave(leave);
-    setVisible(true);
-
-    // default status from leave header
-    setStatusValue(leave?.status || "Pending");
-    setLeaveTypeValue(leave?.leave_type || "Paid");
-    setRejectReason("");
-    setSelectedDates([]);
-
-    dispatch(getLeaveDatesReq({ leaveId: leave?.id }));
+    // Navigate to LeaveDetailScreen, passing the leaveId
+    navigation.navigate("SingleLeaveDataScreen", { leaveId: leave.id });
   };
-
-  const closeModal = () => {
-    setVisible(false);
-    setSelectedLeave(null);
-    setStatusValue("Pending");
-    setLeaveTypeValue("Paid");
-    setRejectReason("");
-    setSelectedDates([]);
-    setIsBulkUpdate(false); // Close the bulk update state
-    dispatch(clearLeaveDates());
-  };
-
-  // ✅ Update leave status for selected dates
-  const updateSelectedDates = (status) => {
-    leaveDates.forEach((item) => {
-      if (selectedDates.includes(item.id)) {
-        dispatch(
-          updateLeaveStatusReq({
-            id: item?.id, // leaveDates row id
-            status,
-            comment: isRejected ? rejectReason.trim() : "",
-            leave_type: leaveTypeValue,
-          })
-        );
-      }
-    });
-  };
-
-  const handleBulkUpdate = (status) => {
-    Alert.alert(
-      "Confirm Bulk Update",
-      `Are you sure you want to ${status} all selected leave dates?`,
-      [
-        { text: "Cancel" },
-        { text: "OK", onPress: () => updateSelectedDates(status) },
-      ]
-    );
-  };
-
-  // Handle individual date approval or rejection
-  const handleApproveReject = (item, action) => {
-    if (action === "approve") {
-      dispatch(
-        updateLeaveStatusReq({
-          id: item.id,
-          status: "Approved",
-          leave_type: leaveTypeValue,
-        })
-      );
-    } else {
-      // Open rejection modal for reason input
-      setRejectReason("");
-      setStatusValue("Rejected");
-      setSelectedDates([item.id]);
-    }
-  };
-
-  // Swipeable functionality for individual leave dates
-  const renderLeftActions = (progress, dragX, item) => (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "flex-end" }}>
-      <TouchableOpacity
-        onPress={() => handleApproveReject(item, "approve")}
-        style={{
-          flex: 1,
-          backgroundColor: "#DCFCE7",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 16,
-        }}
-      >
-        <MaterialCommunityIcons name="check-circle" size={30} color="#166534" />
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderRightActions = (progress, dragX, item) => (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "flex-start" }}>
-      <TouchableOpacity
-        onPress={() => handleApproveReject(item, "reject")}
-        style={{
-          flex: 1,
-          backgroundColor: "#FEE2E2",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 16,
-        }}
-      >
-        <MaterialCommunityIcons name="close-circle" size={30} color="#991B1B" />
-      </TouchableOpacity>
-    </View>
-  );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* ✅ Header */}
+      {/* Header */}
       <View style={styles.header}>
         <IconButton
           icon="chevron-left"
@@ -222,7 +90,7 @@ export default function LeaveManagementScreen({ navigation }) {
         <View style={{ width: 44 }} />
       </View>
 
-      {/* ✅ Year Dropdown */}
+      {/* Year Dropdown */}
       <View style={{ padding: 16, paddingBottom: 8 }}>
         <Text style={{ color: theme.colors.onSurface, fontWeight: "700", marginBottom: 8 }}>
           Select Year
@@ -245,7 +113,7 @@ export default function LeaveManagementScreen({ navigation }) {
         />
       </View>
 
-      {/* ✅ Leaves List */}
+      {/* Leaves List */}
       {listLoading ? (
         <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
           {Array.from({ length: 5 }).map((_, i) => (
@@ -272,211 +140,113 @@ export default function LeaveManagementScreen({ navigation }) {
             <LeaveCard leave={item} onPress={() => openLeave(item)} />
           )}
           ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-          contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+          contentContainerStyle={{ padding: 0, paddingBottom: 24 }}
         />
       )}
-
-      {/* ✅ Modal */}
-      <Portal>
-        <Modal
-          visible={visible}
-          onDismiss={closeModal}
-          dismissable
-          contentContainerStyle={[styles.modalWrap, { backgroundColor: theme.colors.surface, borderColor: border }]}
-        >
-          {/* Modal Header */}
-          <View style={styles.modalHeader}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
-                Leave Details
-              </Text>
-              {!!selectedLeave && (
-                <Text style={{ color: theme.colors.onSurface, opacity: 0.7 }}>
-                  {selectedLeave?.employee_name} • {selectedLeave?.leave_type} •{" "}
-                  {formatDate(selectedLeave?.leave_date)}
-                </Text>
-              )}
-            </View>
-            <IconButton
-              onPress={closeModal}
-              size={22}
-              icon={({ size, color }) => (
-                <MaterialCommunityIcons name="close" size={size} color={color} />
-              )}
-            />
-          </View>
-
-          {/* Leave Dates List */}
-          <Text style={{ color: theme.colors.onSurface, fontWeight: "800", marginBottom: 8 }}>
-            Leave Dates
-          </Text>
-
-          {leaveDatesLoading ? (
-            <LeaveDatesModalSkeleton />
-          ) : leaveDates.length ? (
-            <FlatList
-              data={leaveDates}
-              keyExtractor={(item, index) => String(item?.id ?? index)}
-              renderItem={({ item }) => (
-                <Swipeable
-                  renderLeftActions={(progress, dragX) =>
-                    renderLeftActions(progress, dragX, item)
-                  }
-                  renderRightActions={(progress, dragX) =>
-                    renderRightActions(progress, dragX, item)
-                  }
-                >
-                  <LeaveDateRow item={item} />
-                </Swipeable>
-              )}
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              scrollEnabled={false}
-            />
-          ) : (
-            <Text style={{ color: theme.colors.onSurface, opacity: 0.75 }}>
-              No leave dates found for this request.
-            </Text>
-          )}
-
-          {/* Bulk Update Section */}
-          <View style={{ marginTop: 12 }}>
-            <Text style={{ color: theme.colors.onSurface, fontWeight: "700", marginBottom: 8 }}>
-              Bulk Update
-            </Text>
-
-            <Checkbox.Item
-              label="Select All"
-              status={selectedDates.length === leaveDates.length ? "checked" : "unchecked"}
-              onPress={() =>
-                setSelectedDates(
-                  selectedDates.length === leaveDates.length
-                    ? []
-                    : leaveDates.map((item) => item.id)
-                )
-              }
-            />
-          </View>
-
-          {/* Save Button */}
-          <View style={{ marginTop: 12 }}>
-            <Button
-              mode="contained"
-              loading={updateLoading}
-              disabled={(!statusValue || (isRejected && !rejectReason.trim()))}
-              onPress={() => handleBulkUpdate(statusValue)}
-            >
-              Save
-            </Button>
-          </View>
-        </Modal>
-      </Portal>
     </View>
   );
 }
+
+// Add other helper components like LeaveCard, EmptyState, etc.
+
 
 // **Skeletons** and other helper functions will be used here
 
 /** ------- UI Components ------- */
 
-function LeaveCard({ leave, onPress }) {
-  const theme = useTheme();
-  const border = theme.dark ? "#334155" : "#e5e7eb";
-  const statusStyles = getStatusStyles(leave?.status);
+// function LeaveCard({ leave, onPress }) {
+//   const theme = useTheme();
+//   const border = theme.dark ? "#334155" : "#e5e7eb";
+//   const statusStyles = getStatusStyles(leave?.status);
 
-  return (
-    <Card
-      onPress={onPress}
-      style={[
-        styles.card,
-        {
-          backgroundColor: theme.colors.surface,
-          borderColor: border,
-          borderWidth: 1,
-        },
-      ]}
-      mode="contained"
-    >
-      <Card.Content>
-        <View style={styles.rowBetween}>
-          <View style={{ flex: 1 }}>
-            <Text
-              style={[
-                styles.label,
-                { color: theme.colors.onSurface, opacity: 0.7 },
-              ]}
-            >
-              Employee
-            </Text>
-            <Text
-              style={[styles.valueSmall, { color: theme.colors.onSurface }]}
-              numberOfLines={1}
-            >
-              {leave?.employee_name || "-"}
-            </Text>
-          </View>
+//   return (
+//     <Card
+//       onPress={onPress}
+//       style={[
+//         styles.card,
+//         {
+//           backgroundColor: theme.colors.surface,
+//           borderColor: border,
+//           borderWidth: 1,
+//         },
+//       ]}
+//       mode="contained"
+//     >
+//       <Card.Content>
+//         <View style={styles.rowBetween}>
+//           <View style={{ flex: 1 }}>
+//             <Text
+//               style={[styles.label, { color: theme.colors.onSurface, opacity: 0.7 }]}
+//             >
+//               Employee
+//             </Text>
+//             <Text
+//               style={[styles.valueSmall, { color: theme.colors.onSurface }]}
+//               numberOfLines={1}
+//             >
+//               {leave?.employee_name || "-"}
+//             </Text>
+//           </View>
 
-          <View style={[styles.statusPill, statusStyles.pill]}>
-            <Text
-              style={[styles.statusText, statusStyles.text]}
-              numberOfLines={1}
-            >
-              {leave?.status || "-"}
-            </Text>
-          </View>
-        </View>
+//           <View style={[styles.statusPill, statusStyles.pill]}>
+//             <Text
+//               style={[styles.statusText, statusStyles.text]}
+//               numberOfLines={1}
+//             >
+//               {leave?.status || "-"}
+//             </Text>
+//           </View>
+//         </View>
 
-        <View style={styles.divider} />
+//         <View style={styles.divider} />
 
-        <InfoRow label="Leave Date" value={formatDate(leave?.leave_date)} />
-        <InfoRow label="Type" value={leave?.leave_type} />
-        <InfoRow label="Applied On" value={formatDate(leave?.applied_on)} />
-        <InfoRow label="Duration" value={formatDuration(leave?.duration)} />
+//         <InfoRow label="Leave Date" value={formatDate(leave?.leave_date)} />
+//         <InfoRow label="Type" value={leave?.leave_type} />
+//         <InfoRow label="Applied On" value={formatDate(leave?.applied_on)} />
+//         <InfoRow label="Duration" value={formatDuration(leave?.duration)} />
 
-        {!!leave?.leave_reason && (
-          <View style={{ marginTop: 10 }}>
-            <Text
-              style={[
-                styles.label,
-                { color: theme.colors.onSurface, opacity: 0.7 },
-              ]}
-            >
-              Reason
-            </Text>
-            <Text
-              style={[styles.reason, { color: theme.colors.onSurface }]}
-              numberOfLines={3}
-            >
-              {leave.leave_reason}
-            </Text>
-          </View>
-        )}
+//         {!!leave?.leave_reason && (
+//           <View style={{ marginTop: 10 }}>
+//             <Text
+//               style={[styles.label, { color: theme.colors.onSurface, opacity: 0.7 }]}
+//             >
+//               Reason
+//             </Text>
+//             <Text
+//               style={[styles.reason, { color: theme.colors.onSurface }]}
+//               numberOfLines={3}
+//             >
+//               {leave.leave_reason}
+//             </Text>
+//           </View>
+//         )}
 
-        {/* ✅ View Detail button */}
-        <View style={{ height: 12 }} />
+//         {/* ✅ View Detail button */}
+//         <View style={{ height: 12 }} />
 
-        <TouchableOpacity
-          onPress={onPress}
-          activeOpacity={0.8}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: 6,
-          }}
-        >
-          <MaterialCommunityIcons
-            name="eye-outline"
-            size={18}
-            color={theme.colors.primary}
-          />
-          <Text style={{ color: theme.colors.primary, fontWeight: "800" }}>
-            View Detail
-          </Text>
-        </TouchableOpacity>
-      </Card.Content>
-    </Card>
-  );
-}
+//         <TouchableOpacity
+//           onPress={onPress}
+//           activeOpacity={0.8}
+//           style={{
+//             flexDirection: "row",
+//             alignItems: "center",
+//             justifyContent: "flex-end",
+//             gap: 6,
+//           }}
+//         >
+//           <MaterialCommunityIcons
+//             name="eye-outline"
+//             size={18}
+//             color={theme.colors.primary}
+//           />
+//           <Text style={{ color: theme.colors.primary, fontWeight: "800" }}>
+//             View Detail
+//           </Text>
+//         </TouchableOpacity>
+//       </Card.Content>
+//     </Card>
+//   );
+// }
 
 function LeaveDateRow({ item }) {
   const theme = useTheme();
@@ -588,10 +358,7 @@ function LeaveCardSkeleton() {
           <View style={{ flex: 1 }}>
             <View style={[styles.skelLine, { width: "45%" }]} />
             <View
-              style={[
-                styles.skelLine,
-                { width: "70%", marginTop: 8, height: 14 },
-              ]}
+              style={[styles.skelLine, { width: "70%", marginTop: 8, height: 14 }]}
             />
           </View>
           <View style={styles.skelPill} />
