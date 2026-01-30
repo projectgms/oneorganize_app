@@ -4,6 +4,7 @@ const initialState = {
   token: null,
   tokenType: "Bearer",
   expiresIn: null,
+bootstrapping: true,
 
   tenant: null,
 
@@ -141,9 +142,49 @@ clearResetPasswordState: (state) => {
       state.error = action.payload || "Change password failed";
     },
 
+    hydrateAuthRequest: (state) => {
+  state.bootstrapping = true;
+},
+
+hydrateAuthSuccess: (state, action) => {
+  state.bootstrapping = false;
+
+  const p = action.payload;
+
+  if (!p?.token) {
+    // ✅ no token found => logged out state
+    state.token = null;
+    state.tokenType = "Bearer";
+    state.expiresIn = null;
+    state.tenant = null;
+
+    state.user = null;
+    state.roles = [];
+    state.permissions = [];
+    state.brandSettings = null;
+    return;
+  }
+
+  state.token = p.token;
+  state.tokenType = p.tokenType || "Bearer";
+  state.expiresIn = p.expiresIn ?? null;
+  state.tenant = p.tenant || null;
+
+  state.user = p.user || null;
+  state.roles = p.roles || [];
+  state.permissions = p.permissions || [];
+  state.brandSettings = p.brandSettings || null;
+},
+
+
+hydrateAuthFailure: (state) => {
+  state.bootstrapping = false;
+},
+
+
     // LOGOUT + UTIL
     logoutRequest: (state) => {
-  state.loading = true;
+  // state.loading = true;
   state.error = null;
 },
 logoutSuccess: (state) => {
@@ -159,6 +200,7 @@ logoutSuccess: (state) => {
   state.brandSettings = null;
 
   state.loading = false;
+    state.bootstrapping = false; // ✅ safety
   state.error = null;
 },
 logoutFailure: (state, action) => {
@@ -198,6 +240,9 @@ export const {
   logoutFailure,
   clearAuthMessage,
   clearAuthError,
+   hydrateAuthRequest,
+  hydrateAuthSuccess,
+  hydrateAuthFailure,
 } = authSlice.actions;
 
 export default authSlice.reducer;
