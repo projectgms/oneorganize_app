@@ -8,6 +8,7 @@ import DashboardScreen from "../screens/app/DashboardScreen";
 import ApplyLeaveScreen from "../screens/app/ApplyLeaveScreen";
 import GanttScreen from "../screens/app/GanttScreen";
 import ModernTodoScreen from "./../screens/app/ModernTodoScreen";
+import DelayedTaskScreen from "./../screens/app/DelayedTaskScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -61,6 +62,21 @@ export default function MainTabs() {
         }}
       />
 
+        <Tab.Screen
+        name="DelayedTasks"
+        component={DelayedTaskScreen} // Your screen component for delayed tasks
+        options={{
+          title: "Delayed Tasks",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="clock-alert-outline" // This clearly signals a delay or time warning
+              color={color}
+              size={size + 3} // Matches your established style for larger, modern tab icons
+            />
+          ),
+        }}
+      />
+
       <Tab.Screen
         name="TodoScreen"
         component={ModernTodoScreen}
@@ -75,6 +91,8 @@ export default function MainTabs() {
           ),
         }}
       />
+
+    
 
       {/* <Tab.Screen
         name="Gantt"

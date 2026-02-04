@@ -48,6 +48,12 @@ export default function ModernTodoScreen() {
     setInputText("");
   };
 
+  const today = new Date().toLocaleDateString('en-US', {
+  month: 'short',
+  day: '2-digit',
+  year: 'numeric',
+}).toUpperCase();
+
   const renderItem = useCallback(({ item, drag, isActive }) => {
     return (
       <ScaleDecorator>
@@ -119,7 +125,7 @@ export default function ModernTodoScreen() {
         
         <View style={styles.header}>
           <View>
-            <Text style={[styles.dateSub, { color: theme.colors.secondary }]}>JAN 30, 2026</Text>
+            <Text style={[styles.dateSub, { color: theme.colors.secondary }]}>{today}</Text>
             <Text style={[styles.title, { color: theme.colors.onBackground }]}>Agenda</Text>
           </View>
         </View>
