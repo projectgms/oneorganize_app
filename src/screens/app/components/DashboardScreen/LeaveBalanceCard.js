@@ -10,20 +10,35 @@ export const LeaveBalanceCard = ({ available, total }) => {
   const theme = useTheme();
 
   return (
-    <View 
+    <View
       style={[
-        styles.badgeContainer, 
-        { 
-          backgroundColor: theme.dark ? theme.colors.secondaryContainer : "#E8EAF6",
-          borderColor: theme.colors.outlineVariant 
-        }
+        styles.badgeContainer,
+        {
+          backgroundColor: theme.dark
+            ? theme.colors.secondaryContainer
+            : "#E8EAF6",
+          borderColor: theme.colors.outlineVariant,
+        },
       ]}
     >
-      <Text style={[styles.labelText, { color: theme.colors.onSurfaceVariant }]}>
-        Total Available Leaves:{" "}
-        <Text style={[styles.countText, { color: theme.colors.primary }]}>
-          {available} / {total}
-        </Text>
+      <Text
+        style={[styles.labelText, { color: theme.colors.onSurfaceVariant }]}
+      >
+        
+        {available === 0 && total === 0 ? (
+          <Text style={[styles.countText, { color: theme.colors.primary }]}>
+            You do not have paid leaves
+          </Text>
+        ) : (
+          <Text
+            style={[styles.labelText, { color: theme.colors.onSurfaceVariant }]}
+          >
+            Total Available Paid Leaves:{" "}
+            <Text style={[styles.countText, { color: theme.colors.primary }]}>
+              {available} / {total}
+            </Text>
+          </Text>
+        )}
       </Text>
     </View>
   );
@@ -38,8 +53,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 99, // Pill shape
     borderWidth: 1,
-    marginVertical: 4,
-    marginHorizontal:6
+    marginVertical: 0,
+    marginHorizontal: 6,
   },
   labelText: {
     fontSize: 12,

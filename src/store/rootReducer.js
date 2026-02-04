@@ -4,6 +4,7 @@ import hrmReducer from "./slices/hrmSlice";
 import profileReducer from "./slices/ProfileSlice";
 import leaveManageReducer from "./slices/leaveManageSlice";
 import todayTasksReducer from './slices/todaysSlice';
+import projectReducer from './slices/projectSlice';
 
 const appReducer = combineReducers({
   auth: authReducer,
@@ -11,6 +12,7 @@ const appReducer = combineReducers({
   profile: profileReducer,
   leaveManage: leaveManageReducer,
   todayTasks: todayTasksReducer,
+  project: projectReducer,
 });
 
 // ✅ THIS resets ALL slices when logoutSuccess happens

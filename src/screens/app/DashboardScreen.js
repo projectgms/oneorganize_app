@@ -4,6 +4,8 @@ import { Card, ProgressBar, Text, Button, useTheme } from "react-native-paper";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchHrmOverviewRequest } from "../../store/slices/hrmSlice";
 import { fetchTodayTaskRequest } from "../../store/slices/todaysSlice";
+import { getAvailLeavesDataReq } from "../../store/slices/leaveManageSlice";
+import { getProjectDataReq, getDelayedTaskReq } from "../../store/slices/projectSlice";
 import { getProfileReq } from "../../store/slices/ProfileSlice";
 import AvatarRow from "./components/DashboardScreen/AvatarRow";
 import CollapsibleSection from "./components/DashboardScreen/CollapsibleSection";
@@ -16,6 +18,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import NoTasksCard from "./components/DashboardScreen/NoTasksCard";
 import { EmptyPeopleCard } from "./components/DashboardScreen/EmptyPeopleCard";
 import { LeaveBalanceCard } from "./components/DashboardScreen/LeaveBalanceCard";
+import { ProjectHorizontalList } from './components/DashboardScreen/ProjectHorizontalList';
+import { ProjectSkeletonLoader } from './components/DashboardScreen/Skeletons/ProjectSkeletonLoader';
+import { DelayedTaskBadge } from './components/DashboardScreen/DelayedTaskBadge';
+
+
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -72,7 +79,21 @@ export default function DashboardScreen({ navigation }) {
 
   const { profileLoading } = useSelector((s) => s.profile);
 
-  const apiLoading = profileLoading || loading;
+  const {avialLeavesData} = useSelector((s) => s.leaveManage);
+
+  const avialLeavesLoading = useSelector((s) => s.leaveManage.loading?.avialLeavesLoading);
+
+  const projectDataLoading = useSelector((s) => s.project.loading?.projectSLoading);
+
+  const projectDelayTaskLoading = useSelector((s) => s.project.loading?.delayTaskLoading);
+
+  const projectDelayData = useSelector((s) => s.project.delayedTaskData);
+
+  const projectListData = useSelector((s) => s.project.projectsData);
+
+  // console.log("projectDelayData: ", projectDelayData);
+
+  const apiLoading = profileLoading || loading || avialLeavesLoading || projectDataLoading || projectDelayTaskLoading;
 
   // console.log("employeeAttendance:",employeeAttendance);
 
@@ -87,6 +108,9 @@ export default function DashboardScreen({ navigation }) {
       dispatch(fetchHrmOverviewRequest());
       dispatch(getProfileReq());
       dispatch(fetchTodayTaskRequest());
+      dispatch(getAvailLeavesDataReq());
+      dispatch(getProjectDataReq());
+      dispatch(getDelayedTaskReq());
     }, [dispatch]),
   );
 
@@ -214,7 +238,8 @@ export default function DashboardScreen({ navigation }) {
               }}
             >
               <View style={styles.centeredWrapper}>
-                <LeaveBalanceCard available="4" total="15" />
+                {projectDelayData?.length > 0 && <DelayedTaskBadge status={'delay'} />}
+                <LeaveBalanceCard available={avialLeavesData?.paid_leave_taken || 0} total={avialLeavesData?.available_paid_leave || 0} />
               </View>
               <Card.Content>
                 <View
@@ -307,7 +332,9 @@ export default function DashboardScreen({ navigation }) {
             </Card>
           ))}
 
-        <View style={{ paddingVertical: 12 }}>
+          {apiLoading ? <ProjectSkeletonLoader/> : <ProjectHorizontalList projectListData={projectListData || {}}/>}
+
+        <View style={{ paddingVertical: 4 }}>
           {apiLoading ? (
             <OnLeaveTodaySkeleton />
           ) : noPeopleUpdates ? (
@@ -346,7 +373,7 @@ export default function DashboardScreen({ navigation }) {
           )}
         </View>
 
-        <View style={{ marginVertical: 24 }}>
+        <View style={{ marginVertical: 4 }}>
           <Text
             style={{
               fontSize: 16,
@@ -382,9 +409,12 @@ export default function DashboardScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   centeredWrapper: {
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: "row", // Forces items into one line
+    // justifyContent: "center", // Centers items horizontally
+    alignItems: "center", // Centers items vertically
     width: "100%",
-    paddingVertical: 4, // Adds a bit of vertical spacing
+    marginVertical: 4,
+    paddingHorizontal:8,
+    flexWrap: "wrap", // Allows wrapping if the screen is too narrow
   },
 });
