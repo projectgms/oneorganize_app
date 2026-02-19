@@ -8,6 +8,7 @@ export default function AvatarRow({
   users = [],
   ringColor = "#2ECC71",
   fallbackIcon = "account",
+  isLeave
 }) {
   const theme = useTheme();
 
@@ -66,11 +67,11 @@ export default function AvatarRow({
                 {item?.name ?? "Unknown"}
               </Text>
 
-              <Text
+          <Text
                 style={[styles.dob, { color: theme.colors.onSurfaceVariant }]}
                 numberOfLines={1}
               >
-                {formatDateLabel(item?.dob) ?? "Unknown"}
+                {isLeave ? formatDateLabel(item?.dob)  : formatDateLabel(item?.leave_date) }
               </Text>
             </View>
           );

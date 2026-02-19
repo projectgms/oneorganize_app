@@ -350,6 +350,7 @@ export default function DashboardScreen({ navigation }) {
                   title="On Leave Today"
                   users={todaysLeave}
                   ringColor="#7393B3"
+                  isLeave={false}
                   fallbackIcon="account-circle"
                 />
               }
@@ -361,6 +362,7 @@ export default function DashboardScreen({ navigation }) {
                 users={birthdays}
                 ringColor="#98FB98"
                 fallbackIcon="account-circle"
+                isLeave={true}
               />
 
               <AvatarRow
@@ -368,6 +370,7 @@ export default function DashboardScreen({ navigation }) {
                 users={joiningAnniversary}
                 ringColor="#FFC0CB"
                 fallbackIcon="account-circle"
+                isLeave={true}
               />
             </CollapsibleSection>
           )}

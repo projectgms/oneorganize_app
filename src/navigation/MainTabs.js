@@ -77,7 +77,7 @@ export default function MainTabs() {
         }}
       />
 
-      <Tab.Screen
+      {/* <Tab.Screen
         name="TodoScreen"
         component={ModernTodoScreen}
         options={{
@@ -90,7 +90,7 @@ export default function MainTabs() {
             />
           ),
         }}
-      />
+      /> */}
 
     
 
