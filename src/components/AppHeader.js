@@ -10,19 +10,31 @@ export default function AppHeader({ navigation }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
-  // ✅ ONLY ME API DATA (auth.user)
   const user = useSelector((s) => s.auth.user);
+  const profile = useSelector((s) => s.profile.data); // ✅ use profile
+  const avatarVersion = useSelector((s) => s.profile.avatarVersion); // ✅ cache bust
+
   const brandPrimary =
     useSelector((s) => s.auth.brandSettings?.primary_color) || "#1677ff";
 
   const annoucements = useSelector((s) => s.hrm.annoucements);
 
-  const displayName = user?.name || "User";
-  const roleText = user?.designation || "Employee";
+  // ✅ prefer profile first, fallback to auth.user
+  const displayName = profile?.name || user?.name || "User";
+  const roleText = profile?.designation || user?.designation || "Employee";
 
-  // ✅ use user picture if exists (adjust key name if your backend uses different)
-  const pic = user?.profile_picture || user?.avatar || user?.photo_url || null;
-  const source = typeof pic === "string" ? { uri: pic } : pic;
+  const pic =
+    profile?.profile_picture ||
+    user?.profile_picture ||
+    user?.avatar ||
+    user?.photo_url ||
+    null;
+
+  // ✅ cache-bust (forces image reload even if url is same)
+  const avatarUri =
+    typeof pic === "string" && pic
+      ? `${pic}${pic.includes("?") ? "&" : "?"}v=${avatarVersion}`
+      : null;
 
   const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
 
@@ -56,10 +68,11 @@ export default function AppHeader({ navigation }) {
         </Pressable>
 
         <View style={styles.center}>
-          {pic ? (
+          {avatarUri ? (
             <Avatar.Image
+              key={avatarUri} // ✅ force rerender
               size={38}
-              source={source}
+              source={{ uri: avatarUri }}
               style={{ backgroundColor: brandPrimary }}
             />
           ) : (

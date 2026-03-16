@@ -11,20 +11,18 @@ import {
   updateProfileSucc,
 } from "../slices/ProfileSlice";
 
-import { postMultipart } from "../../utils/uploadMultipart"; // ✅ change path if needed
+import { meRequest } from "../slices/authSlice"; // ✅ add this
+import { postMultipart } from "../../utils/uploadMultipart";
 
 const selectToken = (s) => s.auth.token;
 
 const pickData = (payload) => payload?.data ?? payload;
 
-const pickErrorMessage = (error) => {
-  return (
-    error?.response?.data?.message ||
-    error?.response?.data?.error ||
-    error?.message ||
-    "Network Error"
-  );
-};
+const pickErrorMessage = (error) =>
+  error?.response?.data?.message ||
+  error?.response?.data?.error ||
+  error?.message ||
+  "Network Error";
 
 function* handleGetProfile() {
   const tokenAtStart = yield select(selectToken);
@@ -32,10 +30,6 @@ function* handleGetProfile() {
 
   try {
     const res = yield call(api.get, "/profile");
-
-    const tokenNow = yield select(selectToken);
-    if (!tokenNow || tokenNow !== tokenAtStart) return;
-
     yield put(getProfileSucc(pickData(res?.data)));
   } catch (error) {
     yield put(getProfileFail(pickErrorMessage(error)));
@@ -47,18 +41,18 @@ function* handleUpdateProfile(action) {
   if (!tokenAtStart) return;
 
   try {
-    // ✅ IMPORTANT: use fetch for multipart (fixes Android Network Error)
     const payload = yield call(postMultipart, "/update-profile", action.payload);
-
-    const tokenNow = yield select(selectToken);
-    if (!tokenNow || tokenNow !== tokenAtStart) return;
-
     const data = pickData(payload);
+
+    // ✅ update profile slice immediately
     yield put(updateProfileSucc(data));
 
     Toast.show({ type: "success", text1: "Profile updated" });
 
-    // ✅ refresh to ensure latest image url from server
+    // ✅ refresh auth.user too (optional but best)
+    yield put(meRequest());
+
+    // ✅ also refresh profile from server (optional)
     yield put(getProfileReq());
   } catch (error) {
     const msg = pickErrorMessage(error);

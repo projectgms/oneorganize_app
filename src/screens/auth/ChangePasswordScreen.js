@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import {
   Button,
@@ -10,17 +10,18 @@ import {
   Snackbar,
   useTheme,
 } from "react-native-paper";
-import { useAuth } from "../../context/AuthContext";
-
-import { changePasswordRequest } from "./../../store/slices/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 
+import {
+  changePasswordRequest,
+  resetChangePasswordState,
+} from "./../../store/slices/authSlice";
+
 export default function ChangePasswordScreen({ navigation }) {
-  const { changePassword } = useAuth();
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const { loading } = useSelector((s) => s.auth);
+  const { loading, error, changePasswordDone } = useSelector((s) => s.auth);
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -30,11 +31,48 @@ export default function ChangePasswordScreen({ navigation }) {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState(false);
 
-  const onSubmit = async () => {
+  // show redux error (only when change password fails)
+  useEffect(() => {
+    if (error) setErr(error);
+  }, [error]);
+
+  // ✅ on success: clear + goBack
+  useEffect(() => {
+    if (!changePasswordDone) return;
+
+    setOk(true);
+
+    // clear fields
+    setOldPassword("");
+    setNewPassword("");
+    setConfirm("");
+    setErr("");
+
+    // reset redux flag so it won't auto-trigger next time
+    dispatch(resetChangePasswordState());
+
+    // go back to previous screen
+    navigation?.goBack?.();
+  }, [changePasswordDone, dispatch, navigation]);
+
+  // ✅ when screen opens, ensure clean state
+  useEffect(() => {
+    const unsub = navigation?.addListener?.("focus", () => {
+      setErr("");
+      setOk(false);
+      setOldPassword("");
+      setNewPassword("");
+      setConfirm("");
+      dispatch(resetChangePasswordState());
+    });
+
+    return unsub;
+  }, [dispatch, navigation]);
+
+  const onSubmit = () => {
     setErr("");
 
     if (!oldPassword || !newPassword || !confirm)
@@ -43,37 +81,17 @@ export default function ChangePasswordScreen({ navigation }) {
       return setErr("New password must be at least 6 characters");
     if (newPassword !== confirm) return setErr("Passwords do not match");
 
-    try {
-      // setLoading(true);
-      // const res = await changePassword({ oldPassword, newPassword });
-
-      dispatch(
-        changePasswordRequest({
-          password: newPassword,
-          old_password: oldPassword,
-          password_confirmation: newPassword,
-        }),
-      );
-
-      if (!res?.ok) {
-        setErr(res?.message || "Change failed");
-        return;
-      }
-
-      setOk(true);
-      setOldPassword("");
-      setNewPassword("");
-      setConfirm("");
-    } finally {
-      // setLoading(false);
-    }
+    dispatch(
+      changePasswordRequest({
+        old_password: oldPassword,
+        password: newPassword,
+        password_confirmation: confirm, // ✅ correct
+      })
+    );
   };
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-    >
-      {/* Header (same as Edit Profile) */}
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
         <IconButton
           icon="chevron-left"
@@ -89,7 +107,6 @@ export default function ChangePasswordScreen({ navigation }) {
 
       <Card style={[styles.card, { backgroundColor: theme.colors.background }]}>
         <Card.Content>
-          {/* Old */}
           <Text style={[styles.label, { color: theme.colors.onSurface }]}>
             Old Password<Text style={{ color: "#22c55e" }}> *</Text>
           </Text>
@@ -112,7 +129,6 @@ export default function ChangePasswordScreen({ navigation }) {
             }
           />
 
-          {/* New */}
           <Text style={[styles.label, { color: theme.colors.onSurface }]}>
             New Password<Text style={{ color: "#22c55e" }}> *</Text>
           </Text>
@@ -135,7 +151,6 @@ export default function ChangePasswordScreen({ navigation }) {
             }
           />
 
-          {/* Confirm */}
           <Text style={[styles.label, { color: theme.colors.onSurface }]}>
             Confirm Password<Text style={{ color: "#22c55e" }}> *</Text>
           </Text>
@@ -164,7 +179,6 @@ export default function ChangePasswordScreen({ navigation }) {
 
           <View style={{ height: 10 }} />
 
-          {/* Button style same as Edit Profile */}
           <Button
             mode="contained"
             onPress={onSubmit}
@@ -183,7 +197,7 @@ export default function ChangePasswordScreen({ navigation }) {
         </Card.Content>
       </Card>
 
-      <Snackbar visible={ok} onDismiss={() => setOk(false)} duration={2000}>
+      <Snackbar visible={ok} onDismiss={() => setOk(false)} duration={1200}>
         Password updated
       </Snackbar>
     </View>
